@@ -2,7 +2,8 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    font-family: Consolas, SimHei, monospace;
 }
 
 body {
@@ -31,7 +32,7 @@ body {
 .toolbar {
     display: flex;
     flex-direction: column;
-    height: 65px;
+    height: 57px;
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0px;
@@ -83,10 +84,10 @@ body {
 
 .content-container {
     position: fixed;
-    top: 75px;
+    top: calc(57px + 10px);
     left: 0;
     width: 100%;
-    height: calc(100vh - 75px);
+    height: calc(100vh - 57px - 10px);
     overflow: auto;
 }
 
@@ -99,7 +100,7 @@ body {
 .card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); */
     padding: 10px;
     margin: 10px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -108,7 +109,9 @@ body {
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(200, 0, 0, 0.5);
+    z-index: 10;
+    /* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); */
 }
 
 .card h3 {
@@ -119,7 +122,6 @@ body {
 
 .card p {
     color: #7f8c8d;
-    line-height: 1.5;
     font-size: 14px;
 }
 

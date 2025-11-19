@@ -25,8 +25,8 @@ toolbar.addEventListener('click', function (e) {
 
         let index = Array.prototype.indexOf.call(target.parentNode.children, target)
         let tindex = Array.prototype.indexOf.call(target.parentNode.parentNode.children, target.parentNode)
-        let func = new Function(fg.tools[tindex][index].click)
-        func()
+        let func = new Function('btn', 'tindex', 'index', fg.tools[tindex][index].click)
+        func(target, tindex, index)
     }
 });
 
@@ -60,7 +60,8 @@ contentElement.addEventListener('click', function (e) {
 const fg = {
     tools: [[], []],
     nodes: [],
-    currentCard: { index: -1, card: null, node: null },
+    currentCard: { index: -1, card: null, node: null, tick: 0 },
+    moveSetting: { up: -1, down: 1 },
     addToolbar(tools) {
         [0, 1].forEach(ii => {
             tools[ii].forEach((bi, index) => {
@@ -80,7 +81,11 @@ const fg = {
             if (['height', 'width'].includes(k)) {
                 if (pos[k] <= 0) pos[k] = 100
                 card.style[k] = pos[k] - 20 + 'px'
-            } else {
+            } else if (['left'].includes(k)) {
+                if (pos[k] <= 0) pos[k] = 0
+                card.style[k] = pos[k] + 200 + 'px'
+            } else { // top
+                if (pos[k] <= 0) pos[k] = 0
                 card.style[k] = pos[k] + 'px'
             }
         }
@@ -95,7 +100,7 @@ const fg = {
             // card.setAttribute('index', index+fg.nodes.length)
 
             const text = document.createElement('p');
-            text.innerText = item.file + '\n' + item.text;
+            text.innerText = item.text + '\n' + item.file;
 
             fg.setCardPos(card, item.pos)
 
@@ -111,13 +116,33 @@ const fg = {
         fg.currentCard.index = index
         fg.currentCard.card = contentElement.children[index]
         fg.currentCard.node = fg.nodes[fg.currentCard.index]
+        fg.currentCard.tick = new Date().getTime()
     },
     resetCurrentCardPos() {
         fg.setCardPos(fg.currentCard.card, fg.currentCard.node.pos)
     },
+    move(direct){
+        switch (direct) {
+            case 'up':
+                fg.currentCard.node.pos.top-=100;fg.resetCurrentCardPos()
+                break;
+            case 'down':
+                fg.currentCard.node.pos.top+=100;fg.resetCurrentCardPos()
+                break;
+            case 'left':
+                fg.currentCard.node.pos.left-=100;fg.resetCurrentCardPos()
+                break;
+            case 'right':
+                fg.currentCard.node.pos.left+=100;fg.resetCurrentCardPos()
+                break;
+        }
+    },
     scale(rate) {
         let cr = /\((.*)\)/.exec(contentElement.style.transform)[1];
         contentElement.style.transform = `scale(${rate * (parseFloat(cr) || 1)})`
+    },
+    toggleButton(btn) {
+        btn.classList.contains("primary") ? btn.classList.remove("primary") : btn.classList.add("primary")
     },
 };
 
@@ -126,6 +151,13 @@ globalThis.fg = fg;
 fg.addToolbar(toolbarData)
 fg.addContent(cardData)
 
-
+// Array.from({length:2000}).map(v=>{
+//     let data = JSON.parse(JSON.stringify(cardData))
+//     fg.addContent(data.map(v=>{
+//         v.pos.left+=100*~~(20*Math.random())
+//         v.pos.top+=100*~~(20*Math.random())
+//         return v
+//     }))
+// })
 
 

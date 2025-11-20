@@ -47,7 +47,7 @@ contentElement.addEventListener('click', function (e) {
         fg.setAsCurrentCard(index)
 
         // 创建点击反馈效果
-        if (directClick) {
+        if (1) {
             target.style.transform = 'scale(0.95)';
             setTimeout(() => {
                 target.style.transform = '';
@@ -64,7 +64,8 @@ export const fg = {
     nodes: [],
     link: [],
     currentCard: { index: -1, card: null, node: null, tick: 0 },
-    moveSetting: { up: -1, down: 1 },
+    lastCard: { index: -1, card: null, node: null, tick: 0 },
+    moveSetting: { down: 1 },
     addToolbar(tools) {
         [0, 1].forEach(ii => {
             tools[ii].forEach((bi, index) => {
@@ -109,11 +110,11 @@ export const fg = {
             const card = document.createElement('div');
             card.className = 'card';
 
-            card.setAttribute('id', item.id)
+            // card.setAttribute('id', item.id)
             // card.setAttribute('index', index+fg.nodes.length)
 
             const text = document.createElement('p');
-            text.innerText = item.text + '\n' + item.file;
+            text.innerText = item.text + '\n' + item.file + (item.snapshot?'\nsnapshot':'');
 
             fg.setCardPos(card, item._pos)
 
@@ -125,8 +126,10 @@ export const fg = {
         fg.nodes.push(...nodes)
         fg.buildLines()
         fg.setAsCurrentCard(fg.nodes.length - 1)
+        fg.setAsCurrentCard(fg.nodes.length - 1)
     },
     setAsCurrentCard(index) {
+        Object.assign(fg.lastCard, fg.currentCard)
         fg.currentCard.index = index
         fg.currentCard.card = contentElement.children[index]
         fg.currentCard.node = fg.nodes[fg.currentCard.index]
@@ -134,28 +137,60 @@ export const fg = {
     },
     resetCurrentCardPos() {
         fg.setCardPos(fg.currentCard.card, fg.currentCard.node._pos)
-        fg.buildLines() // 有需求再优化
+        fg.buildLines() // 理论上只应该重连一个图块的线,有需求再优化
     },
     move(direct) {
-        switch (direct) {
-            case 'up':
-                fg.currentCard.node._pos.top -= 100; fg.resetCurrentCardPos()
-                break;
-            case 'down':
-                fg.currentCard.node._pos.top += 100; fg.resetCurrentCardPos()
-                break;
-            case 'left':
-                fg.currentCard.node._pos.left -= 100; fg.resetCurrentCardPos()
-                break;
-            case 'right':
-                fg.currentCard.node._pos.left += 100; fg.resetCurrentCardPos()
-                break;
+        function moveNode(node) {
+            switch (direct) {
+                case 'up':
+                    node._pos.top -= 100;
+                    break;
+                case 'down':
+                    node._pos.top += 100;
+                    break;
+                case 'left':
+                    node._pos.left -= 100;
+                    break;
+                case 'right':
+                    node._pos.left += 100;
+                    break;
+            }
+        }
+        let node = fg.currentCard.node
+        if (fg.moveSetting.down < 0) {
+            moveNode(node)
+            fg.resetCurrentCardPos()
+        } else {
+            let nodes = []
+            function getnodes(v) {
+                nodes.push(v)
+                let lsindex = fg.nodes.indexOf(v)
+                if (v._linkTo) for (let lsname in v._linkTo) {
+                    for (let deltai in v._linkTo[lsname]) {
+                        // let lename = v._linkTo[lsname][deltai]
+                        let leindex = lsindex + ~~deltai
+                        if (leindex >= 0 && leindex < fg.nodes.length) {
+                            let vv = fg.nodes[leindex]
+                            if (vv._pos.left >= node._pos.left && vv._pos.top >= node._pos.top && nodes.indexOf(vv) === -1) {
+                                getnodes(vv)
+                            }
+                        }
+                    }
+                }
+            }
+            getnodes(node)
+            nodes.forEach(v => {
+                moveNode(v)
+                fg.setCardPos(contentElement.children[fg.nodes.indexOf(v)], v._pos)
+            })
+            fg.buildLines() // 理论上只应该重连涉及的图块的线,有需求再优化
         }
     },
     scale(rate) {
         // let cr = /\((.*)\)/.exec(contentElement.style.transform)[1];
         // contentElement.style.transform = `scale(${rate * (parseFloat(cr) || 1)})`
         elementScale *= rate
+        if (rate == null) elementScale = 1
         contentScaleElement.style.transform = `scale(${elementScale})`
     },
     toggleButton(btn) {
@@ -166,7 +201,7 @@ export const fg = {
         lineElement.innerHTML = ''
     },
     reDrawLine(lsindex, leindex) {
-        console.log(lsindex, leindex, fg.link[lsindex][leindex])
+        // console.log(lsindex, leindex, fg.link[lsindex][leindex])
         for (const linei of fg.link[lsindex][leindex]) {
             let { s, e } = linei
             function getExpandedBoundingRect(rect1, rect2, expand = 100) {
@@ -231,11 +266,67 @@ export const fg = {
                 for (let deltai in v._linkTo[lsname]) {
                     let lename = v._linkTo[lsname][deltai]
                     let leindex = lsindex + ~~deltai
-                    fg.addLine(lsindex, leindex, lsname, lename)
+                    if (leindex >= 0 && leindex < fg.nodes.length) {
+                        fg.addLine(lsindex, leindex, lsname, lename)
+                    }
                 }
             }
         })
-
+    },
+    uiAddLine(lsindex, leindex, lsname, lename) {
+        // console.log(lsindex, leindex, lsname, lename)
+        for (const ll of fg.link[lsindex][leindex]) {
+            if (lsname==ll.lsname && lename==ll.lename) {
+                return
+            }
+        }
+        fg.nodes[lsindex]._linkTo=Object.assign({},fg.nodes[lsindex]._linkTo)
+        fg.nodes[lsindex]._linkTo[lsname]=Object.assign({},fg.nodes[lsindex]._linkTo[lsname],{[leindex-lsindex]:lename})
+        fg.addLine(lsindex, leindex, lsname, lename)
+    },
+    uiRemoveLine(lsindex, leindex, lsname, lename) {
+        // console.log(lsindex, leindex, lsname, lename)
+        for (const ll of fg.link[lsindex][leindex]) {
+            if (lsname==ll.lsname && lename==ll.lename) {
+                ll.element.remove()
+                fg.link[lsindex][leindex].splice(fg.link[lsindex][leindex].indexOf(ll), 1);
+                delete fg.nodes[lsindex]._linkTo[lsname]
+                return
+            }
+        }
+    },
+    simpleJson(value) {
+        function processValue(value) {
+            if (Array.isArray(value)) {
+                return `[${value.map(processValue).join(',')}]`;
+            } else if (value !== null && typeof value === 'object') {
+                const entries = Object.entries(value);
+                const pairs = entries.map(([key, val]) => {
+                    // 检查键是否可以作为合法的JavaScript标识符（不用引号）
+                    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+                        return `${key}:${processValue(val)}`;
+                    } else {
+                        // 不合法的标识符需要保留引号
+                        return `"${key}":${processValue(val)}`;
+                    }
+                });
+                return `{${pairs.join(',')}}`;
+            } else if (typeof value === 'string') {
+                // 字符串值保持引号
+                return JSON.stringify(value);
+            } else {
+                // 数字、布尔值、null等直接输出
+                return String(value);
+            }
+        }
+        let ret = '';
+        if (Array.isArray(value)) {
+            ret = `[\n    ${value.map(processValue).join(',\n    ')}\n]`;
+        } else {
+            ret = processValue(value)
+        }
+        // console.log(ret)
+        return ret
     },
 };
 

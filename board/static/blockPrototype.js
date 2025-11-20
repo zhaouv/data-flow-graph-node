@@ -5,6 +5,10 @@ export const blockPrototype =
             type: "input",
             value: "NormalString_default"
         },
+        Snapshot: {
+            type: "snapshot",
+            value: null
+        },
         MultiString: {
             type: "multi",
             value: "MultiString_default"
@@ -22,21 +26,25 @@ export const blockPrototype =
             options: [
                 ["", ""],
                 ["1", "1"],
+                ["2", "2"],
+                ["3", "3"],
             ],
             value: ""
         },
         runfile: {
             type: 'runfile',
-            message: '%1 %2\n%3',
+            message: '%1\n%2\n%3 %4',
+            run: '%1\n%2\n%3',
             args: [
-                { name: 'filename', type: 'EditSelect', value: 'a.py' },
-                { name: 'runtype', type: 'Runtype', value: '' },
                 { name: 'comment', type: 'MultiString', value: 'comment' },
+                { name: 'filename', type: 'EditSelect', value: 'a.py' },
+                { name: 'snapshot', type: 'Snapshot', value: null },
+                { name: 'runtype', type: 'Runtype', value: '' },
             ],
             typename: null,
             checkType: 'args',
             linkTo: [
-                { name: 'next', position: 'down', range: 'runfile', multi: false }
+                { name: 'next', position: 'down', range: 'runfile'}
             ],
             linkFrom: [
                 { name: 'previous', position: 'up', range: 'runfile' }

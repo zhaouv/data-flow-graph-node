@@ -8,8 +8,8 @@
 
 ## 文件
 
-+ 流程图 flowgraph.json 节点图形式的流程图
-+ 配置 flowgraph.config.json 图上的运行配置
++ 流程图 xxx.flowgraph.json 节点图形式的流程图
++ 配置 xxx.flowgraph.config.json 图上的运行配置
 + 数据流向记录 xxx.record.json 一组运行下的数据派生的记录
 
 ## 节点

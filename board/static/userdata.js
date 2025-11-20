@@ -15,6 +15,8 @@ export const toolbarData = [
 
         { text: '复制', class: 'edit', click: 'fg.copyAndLink(fg.currentCard.index)' },
 
+        { text: '?启用', class: 'run', click: 'console.log("尚未实现")' },
+
 
 
         { text: '测试1-打印nodes', class: 'edit', click: 'console.log("\\n\\n\\n\\n"+fg.simpleJson(fg.nodes)+"\\n\\n\\n\\n")' },
@@ -37,6 +39,8 @@ export const toolbarData = [
         { text: '断开', class: 'edit', click: 'fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"next","previous")' },
 
         { text: '删除', class: 'edit', click: 'fg.removeNode(fg.currentCard.index)' },
+
+        { text: '?禁用', class: 'run', click: 'console.log("尚未实现")' },
     ]
 ];
 

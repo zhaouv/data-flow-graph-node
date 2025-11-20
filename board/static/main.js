@@ -9,6 +9,9 @@ globalThis.fg = fg;
 fg.addToolbar(toolbarData)
 fg.addContent(cardData)
 
+document.querySelector("body > div.content-container").scrollLeft=200
+
+
 // Array.from({length:100}).map(v=>{
 //     let data = JSON.parse(JSON.stringify(cardData))
 //     fg.addContent(data.map(v=>{

@@ -13,6 +13,8 @@ export const toolbarData = [
 
         { text: '连接', class: 'edit', click: 'fg.uiAddLine(fg.lastCard.index,fg.currentCard.index,"next","previous")' },
 
+        { text: '复制', class: 'edit', click: 'fg.copyAndLink(fg.currentCard.index)' },
+
 
 
         { text: '测试1-打印nodes', class: 'edit', click: 'console.log("\\n\\n\\n\\n"+fg.simpleJson(fg.nodes)+"\\n\\n\\n\\n")' },
@@ -33,6 +35,8 @@ export const toolbarData = [
         { text: 'v-', class: 'edit', click: 'fg.currentCard.node._pos.height-=100;fg.resetCurrentCardPos()' },
 
         { text: '断开', class: 'edit', click: 'fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"next","previous")' },
+
+        { text: '删除', class: 'edit', click: 'fg.removeNode(fg.currentCard.index)' },
     ]
 ];
 
@@ -45,5 +49,5 @@ export const cardData = [
     { text: "e2", file: "e2.py", _pos: { left: 300, top: 200, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
     { text: "f", file: "f.py", _pos: { left: 100, top: 200, width: 200, height: 100 }, _linkTo: { next: { "1": "previous" } } },
     { text: "g", file: "g.py", _pos: { left: 100, top: 300, width: 200, height: 100 }, _linkTo: { next: { "1": "previous" } } },
-    { text: "h", file: "h.py", _pos: { left: 300, top: 300, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } }
+    { text: "h", file: "h.py", _pos: { left: 300, top: 300, width: 100, height: 100 } }
 ]

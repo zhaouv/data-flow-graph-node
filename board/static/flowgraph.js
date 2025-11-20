@@ -59,6 +59,7 @@ contentElement.addEventListener('click', function (e) {
     }
 });
 
+const LEFTMARGIN = 200;
 export const fg = {
     tools: [[], []],
     nodes: [],
@@ -87,7 +88,7 @@ export const fg = {
                 card.style[k] = _pos[k] - 20 + 'px'
             } else if (['left'].includes(k)) {
                 if (_pos[k] <= 0) _pos[k] = 0
-                card.style[k] = _pos[k] + 200 + 'px'
+                card.style[k] = _pos[k] + LEFTMARGIN + 'px'
             } else { // top
                 if (_pos[k] <= 0) _pos[k] = 0
                 card.style[k] = _pos[k] + 'px'
@@ -98,7 +99,7 @@ export const fg = {
         if (line == null) return
         for (let k in _pos) {
             if (['left'].includes(k)) {
-                line.style[k] = _pos[k] + 200 + 'px'
+                line.style[k] = _pos[k] + LEFTMARGIN + 'px'
             } else {
                 line.style[k] = _pos[k] + 'px'
             }
@@ -114,7 +115,7 @@ export const fg = {
             // card.setAttribute('index', index+fg.nodes.length)
 
             const text = document.createElement('p');
-            text.innerText = item.text + '\n' + item.file + (item.snapshot?'\nsnapshot':'');
+            text.innerText = item.text + '\n' + item.file + (item.snapshot ? '\nsnap' : '');
 
             fg.setCardPos(card, item._pos)
 
@@ -276,24 +277,59 @@ export const fg = {
     uiAddLine(lsindex, leindex, lsname, lename) {
         // console.log(lsindex, leindex, lsname, lename)
         for (const ll of fg.link[lsindex][leindex]) {
-            if (lsname==ll.lsname && lename==ll.lename) {
+            if (lsname == ll.lsname && lename == ll.lename) {
                 return
             }
         }
-        fg.nodes[lsindex]._linkTo=Object.assign({},fg.nodes[lsindex]._linkTo)
-        fg.nodes[lsindex]._linkTo[lsname]=Object.assign({},fg.nodes[lsindex]._linkTo[lsname],{[leindex-lsindex]:lename})
+        fg.nodes[lsindex]._linkTo = Object.assign({}, fg.nodes[lsindex]._linkTo)
+        fg.nodes[lsindex]._linkTo[lsname] = Object.assign({}, fg.nodes[lsindex]._linkTo[lsname], { [leindex - lsindex]: lename })
         fg.addLine(lsindex, leindex, lsname, lename)
     },
     uiRemoveLine(lsindex, leindex, lsname, lename) {
         // console.log(lsindex, leindex, lsname, lename)
         for (const ll of fg.link[lsindex][leindex]) {
-            if (lsname==ll.lsname && lename==ll.lename) {
+            if (lsname == ll.lsname && lename == ll.lename) {
                 ll.element.remove()
                 fg.link[lsindex][leindex].splice(fg.link[lsindex][leindex].indexOf(ll), 1);
                 delete fg.nodes[lsindex]._linkTo[lsname]
                 return
             }
         }
+    },
+    removeNode(index) {
+        fg.nodes.forEach((v, lsindex) => {
+            if (lsindex === index) return
+            if (v._linkTo) for (let lsname in v._linkTo) {
+                for (let deltai in v._linkTo[lsname]) {
+                    let lename = v._linkTo[lsname][deltai]
+                    let leindex = lsindex + ~~deltai
+                    if (leindex === index) {
+                        delete v._linkTo[lsname][deltai]
+                        continue
+                    }
+                    if (lsindex < index && leindex > index) {
+                        delete v._linkTo[lsname][deltai]
+                        v._linkTo[lsname][-1 + ~~deltai] = lename
+                        continue
+                    }
+                    if (lsindex > index && leindex < index) {
+                        delete v._linkTo[lsname][deltai]
+                        v._linkTo[lsname][1 + ~~deltai] = lename
+                        continue
+                    }
+                }
+            }
+        })
+        fg.nodes.splice(index, 1);
+        contentElement.children[index].remove()
+        fg.buildLines() // 理论上只应该重连涉及的图块的线,有需求再优化
+    },
+    copyAndLink(index) {
+        let node=JSON.parse(JSON.stringify(fg.nodes[index]))
+        delete node._linkTo
+        node._pos.top+=node._pos.height
+        fg.addContent([node])
+        fg.uiAddLine(index, fg.nodes.length - 1, "next", "previous")
     },
     simpleJson(value) {
         function processValue(value) {

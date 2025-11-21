@@ -1,15 +1,17 @@
 import { toolbarData } from './userdata.js'
+import { config } from './userdata.js'
 import { cardData } from './userdata.js'
 // import { cardData } from "./testdata.js";
 
 import { fg } from './flowgraph.js'
 
-globalThis.fg = fg;
-
+fg.setConfig(config)
 fg.addToolbar(toolbarData)
 fg.addContent(cardData)
 
-document.querySelector(".content-container").scrollLeft=200
+fg.requestState()
+
+document.querySelector(".content-container").scrollLeft = 200
 
 
 // Array.from({length:100}).map(v=>{

@@ -54,7 +54,9 @@ function activate(context) {
   let currentText = "";
   let updateHandle = undefined;
 
-  let showTextPanel = null
+  /** @type {vscode.TextDocument | undefined} */
+  let showTextPanel = undefined
+  let webviewState = {}
 
   function createNewPanel() {
     // Create and show panel
@@ -76,8 +78,12 @@ function activate(context) {
 
         switch (message.command) {
           case 'showFile':
+            let path=vscode.workspace.rootPath+'/'+message.filename
+            if(!fs.existsSync(path)){
+              fs.writeFileSync(path, '', { encoding: 'utf8' });
+            }
             vscode.window.showTextDocument(
-              vscode.Uri.file(vscode.workspace.rootPath+'/'+message.filename),
+              vscode.Uri.file(path),
               {
                 viewColumn:vscode.ViewColumn.One,
                 preserveFocus:true
@@ -85,7 +91,7 @@ function activate(context) {
             )
             return;
           case 'showText':
-            if (showTextPanel==null || showTextPanel.isClosed) {
+            if (showTextPanel==undefined || showTextPanel.isClosed) {
               vscode.workspace.openTextDocument({
                 content: message.text,
                 encoding: 'utf8', language: 'log'
@@ -106,6 +112,12 @@ function activate(context) {
                 edit.replace(new vscode.Range(0, 0, 9999, 0), message.text);
               }))
             }
+            return;
+          case 'requestState':
+            currentPanel.webview.postMessage({ command: 'state', content: webviewState });
+            return;
+          case 'saveState':
+            webviewState=message.state;
             return;
           case 'requestCurrentLine':
             pushCurrentLine()

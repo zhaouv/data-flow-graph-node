@@ -45,7 +45,7 @@ contentElement.addEventListener('click', function (e) {
         target = target.parentNode
     }
     if (target.classList.contains('card')) {
-        
+
         // 创建点击反馈效果
         if (1) {
             target.style.transform = 'scale(0.95)';
@@ -53,7 +53,7 @@ contentElement.addEventListener('click', function (e) {
                 target.style.transform = '';
             }, 150);
         }
-        
+
         // 在实际应用中，这里可以添加按钮的具体功能
         console.log(`点击了卡片: ${target.textContent}`);
         let index = Array.prototype.indexOf.call(target.parentNode.children, target)
@@ -70,7 +70,16 @@ export const fg = {
     currentCard: { index: -1, card: null, node: null, tick: 0 },
     lastCard: { index: -1, card: null, node: null, tick: 0 },
     moveSetting: { down: 1 },
-    mode: {edit:1,run:-1,showfile:1},
+    mode: { edit: 1, run: -1, showfile: 1 },
+    state: {},
+    config: {
+        Runtype: {
+            "": {
+                type: 'terminal',
+                messege: 'echo filename'
+            },
+        }
+    },
     getRandomString() {
         let text = '';
         const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -337,9 +346,9 @@ export const fg = {
         fg.buildLines() // 理论上只应该重连涉及的图块的线,有需求再优化
     },
     copyAndLink(index) {
-        let node=JSON.parse(JSON.stringify(fg.nodes[index]))
+        let node = JSON.parse(JSON.stringify(fg.nodes[index]))
         delete node._linkTo
-        node._pos.top+=node._pos.height
+        node._pos.top += node._pos.height
         fg.addContent([node])
         fg.uiAddLine(index, fg.nodes.length - 1, "next", "previous")
     },
@@ -377,33 +386,47 @@ export const fg = {
         return ret
     },
     toggleMode() {
-        fg.mode.run*=-1
-        fg.mode.edit*=-1
+        fg.mode.run *= -1
+        fg.mode.edit *= -1
     },
     clickCard(index) {
         // check if send to double click
-        let node=fg.nodes[index]
-        if(fg.mode.edit>0){
+        let node = fg.nodes[index]
+        if (fg.mode.edit > 0) {
             return
         }
-        if(fg.mode.run>0){
-            if (fg.mode.showfile>0) {
-                connectAPI.showFile(Array.isArray(node.filename)?node.filename[0]:node.filename)
-            } else{
-                connectAPI.showText(Array.isArray(node.filename)?node.filename[0]:node.filename)
+        if (fg.mode.run > 0) {
+            if (fg.mode.showfile > 0) {
+                connectAPI.showFile(Array.isArray(node.filename) ? node.filename[0] : node.filename)
+            } else {
+                connectAPI.showText(Array.isArray(node.filename) ? node.filename[0] : node.filename)
             }
             return
         }
     },
+    saveState(){
+        connectAPI.send({ command: 'saveState', state: fg.state })
+    },
+    requestState(){
+        connectAPI.send({ command: 'requestState' })
+    },
+    updateFromState(){
+        // update from fg.state
+    },
     runNodes(indexes) {
-        for (const index of indexes) {            
-            let node=fg.nodes[index]
-            let rid=fg.getRandomString()
+        for (const index of indexes) {
+            let node = fg.nodes[index]
+            let rid = fg.getRandomString()
         }
+    },
+    setConfig(config) {
+        Object.assign(fg.config, config)
     },
 };
 
+globalThis.fg = fg;
 
+connectAPI.recieve.state='fg.state=message.content;fg.updateFromState()'
 
 
 

@@ -3,6 +3,11 @@ export const connectAPI = {
   send(x) {
     console.log(x)
   },
+  recieve:{
+    currentLine:'connectAPI.setContent(message.content)',
+    custom:'connectAPI.custom(message.content)',
+    readSVGFile:'connectAPI.setSVGContent(message.content)',
+  },
   content: "",
   nonce: () => globalThis.vscodeNonce(),
   /**
@@ -75,17 +80,22 @@ globalThis.addEventListener('message', event => {
   const message = event.data // The JSON data our extension sent
     || event.detail; // for debug in chrome
 
-  switch (message.command) {
-    case 'currentLine':
-      connectAPI.setContent(message.content);
-      break;
-    case 'custom':
-      connectAPI.custom(message.content);
-      break;
-    case 'readSVGFile':
-      connectAPI.setSVGContent(message.content);
-      break;
+  if(message.command in connectAPI.recieve){
+    let func = new Function('connectAPI', 'message', connectAPI.recieve[message.command])
+    func(connectAPI, message)
   }
+  
+  // switch (message.command) {
+  //   case 'currentLine':
+  //     connectAPI.setContent(message.content);
+  //     break;
+  //   case 'custom':
+  //     connectAPI.custom(message.content);
+  //     break;
+  //   case 'readSVGFile':
+  //     connectAPI.setSVGContent(message.content);
+  //     break;
+  // }
 });
 
 (function () {

@@ -144,15 +144,115 @@
                 "click": "console.log(\"尚未实现\")"
             },
             {
-                "text": "?运行",
+                "text": "运行",
                 "class": "run",
-                "click": "console.log(\"尚未实现\")"
+                "click": "fg.runNodes([fg.currentCard.index])"
             },
             {
-                "text": "?结果/文件",
+                "text": "结果/文件",
                 "class": "run primary",
                 "click": "fg.toggleButton(btn);fg.mode.showfile*=-1"
+            },
+            {
+                "text": "测试2-打印config",
+                "class": "edit",
+                "click": "console.log(\"\\n\\n\\n\\n\"+JSON.stringify(fg.config)+\"\\n\\n\\n\\n\")"
             }
         ]
-    ]
+    ],
+    "blockPrototype": {
+        "blocks": {
+            "NormalString": {
+                "type": "input",
+                "value": "NormalString_default"
+            },
+            "Snapshot": {
+                "type": "snapshot",
+                "value": null
+            },
+            "MultiString": {
+                "type": "multi",
+                "value": "MultiString_default"
+            },
+            "EditSelect": {
+                "type": "editabledroplist",
+                "options": [
+                    [
+                        "",
+                        ""
+                    ],
+                    [
+                        "1",
+                        "1"
+                    ]
+                ],
+                "value": ""
+            },
+            "Runtype": {
+                "type": "droplist",
+                "options": [
+                    [
+                        "",
+                        ""
+                    ],
+                    [
+                        "1",
+                        "1"
+                    ],
+                    [
+                        "2",
+                        "2"
+                    ],
+                    [
+                        "3",
+                        "3"
+                    ]
+                ],
+                "value": ""
+            },
+            "runfile": {
+                "type": "runfile",
+                "message": "%1\n%2\n%3 %4",
+                "run": "%1\n%2\n%3",
+                "args": [
+                    {
+                        "name": "comment",
+                        "type": "MultiString",
+                        "value": "comment"
+                    },
+                    {
+                        "name": "filename",
+                        "type": "EditSelect",
+                        "value": "a.py"
+                    },
+                    {
+                        "name": "snapshot",
+                        "type": "Snapshot",
+                        "value": null
+                    },
+                    {
+                        "name": "runtype",
+                        "type": "Runtype",
+                        "value": ""
+                    }
+                ],
+                "typename": null,
+                "checkType": "args",
+                "linkTo": [
+                    {
+                        "name": "next",
+                        "position": "down",
+                        "range": "runfile"
+                    }
+                ],
+                "linkFrom": [
+                    {
+                        "name": "previous",
+                        "position": "up",
+                        "range": "runfile"
+                    }
+                ]
+            }
+        }
+    }
 }

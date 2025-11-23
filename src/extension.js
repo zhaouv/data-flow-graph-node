@@ -143,6 +143,11 @@ function activate(context) {
           case 'requestNodes':
             currentPanel.webview.postMessage({ command: 'nodes', content: nodes });
             return;
+          case 'runFiles':
+            for (const file of message.files) {
+              runFile(file)
+            }
+            return;
           // case 'saveState':
           //   webviewState = message.state;
           //   return;
@@ -163,6 +168,11 @@ function activate(context) {
       undefined,
       context.subscriptions
     );
+  }
+
+  function runFile(file) {
+    let {rid,rconfig,filename,submitTick}=file
+    console.log(file)
   }
 
   context.subscriptions.push(

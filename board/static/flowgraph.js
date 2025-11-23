@@ -71,7 +71,9 @@ export const fg = {
     lastCard: { index: -1, card: null, node: null, tick: 0 },
     moveSetting: { down: 1 },
     mode: { edit: 1, run: -1, showfile: 1 },
-    state: {},
+    // state: {},
+    record: {},
+    connectAPI:connectAPI,
     config: {
         Runtype: {
             "": {
@@ -405,7 +407,14 @@ export const fg = {
             if (fg.mode.showfile > 0) {
                 connectAPI.showFile(Array.isArray(node.filename) ? node.filename[0] : node.filename)
             } else {
-                connectAPI.showText(Array.isArray(node.filename) ? node.filename[0] : node.filename)
+                let toshow=Array.isArray(node.filename) ? node.filename[0] : node.filename
+                toshow+='\n'
+                if (index in fg.record) {
+                    toshow+=JSON.stringify(fg.record[index])
+                } else {
+                    toshow+='null'
+                }
+                connectAPI.showText(toshow)
             }
             return
         }
@@ -428,23 +437,38 @@ export const fg = {
         connectAPI.send({ command: 'requestNodes' })
     },
     runNodes(indexes) {
-        for (const index of indexes) {
+        let files=indexes.map(index=>{
             let node = fg.nodes[index]
             let rid = fg.getRandomString()
+            let submitTick = new Date().getTime()
+            let runtype = node.runtype?node.runtype[0]:''
+            let rconfig = fg.config.Runtype[runtype]
+            let filename=Array.isArray(node.filename) ? node.filename[0] : node.filename
+            let ret={rid,rconfig,filename,submitTick}
+            fg.record[index]=ret
+            return ret
+        })
+        fg.connectAPI.send({ command: 'runFiles', files: files })
+    },
+    addResult(ret){
+        let record=fg.record.filter(v=>v.rid==ret.rid)
+        if (record.length) {
+            Object.assign(record[0],ret)
         }
+        // 提醒放在node侧, web侧不做提醒
     },
     setConfig(config) {
         Object.assign(fg.config, config)
         fg.addToolbar(config.toolbar)
     },
+    setupConnect(){
+        fg.connectAPI.recieve.config='fg.setConfig(message.content);fg.requestNodes()'
+        fg.connectAPI.recieve.nodes='fg.addContent(message.content);'
+        fg.connectAPI.recieve.result='fg.addResult(message.content);'
+        fg.requestConfig()
+    },
 };
 
 globalThis.fg = fg;
-
-connectAPI.recieve.config='fg.setConfig(message.content)'
-connectAPI.recieve.nodes='fg.addContent(message.content);'
-// connectAPI.recieve.nodes='fg.addContent(message.content);fg.requestState()'
-// connectAPI.recieve.state='fg.updateFromState(message.content)'
-
 
 

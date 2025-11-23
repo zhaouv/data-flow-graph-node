@@ -1,3 +1,5 @@
+import {blockPrototype} from './blockPrototype.js'
+
 const toolbarData = [
     [
         { text: 'edit', class: 'primary', click: 'fg.toggleButton(btn);fg.toggleButton(btn.parentNode.parentNode.children[1-tindex].children[index]);fg.toggleMode();' },
@@ -44,13 +46,16 @@ const toolbarData = [
 
         { text: '?禁用', class: 'run', click: 'console.log("尚未实现")' },
         { text: '?运行链', class: 'run', click: 'console.log("尚未实现")' },
-        { text: '?运行', class: 'run', click: 'console.log("尚未实现")' },
-        { text: '?结果/文件', class: 'run primary', click: 'fg.toggleButton(btn);fg.mode.showfile*=-1' },
+        { text: '运行', class: 'run', click: 'fg.runNodes([fg.currentCard.index])' },
+        { text: '结果/文件', class: 'run primary', click: 'fg.toggleButton(btn);fg.mode.showfile*=-1' },
+
+        { text: '测试2-打印config', class: 'edit', click: 'console.log("\\n\\n\\n\\n"+JSON.stringify(fg.config)+"\\n\\n\\n\\n")' },
     ]
 ];
 
 export const config = {
     toolbar: toolbarData,
+    blockPrototype: blockPrototype,
     Runtype: {
         "1": {
             type: 'node-post',

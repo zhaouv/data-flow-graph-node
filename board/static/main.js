@@ -4,14 +4,12 @@ import { cardData } from './debugData.js'
 
 import { fg } from './flowgraph.js'
 
-if (connectAPI.isDebug) {
+if (fg.connectAPI.isDebug) {
     fg.setConfig(config)
     fg.addContent(cardData)
+} else {
+    fg.setupConnect()
 }
-
-fg.requestConfig()
-fg.requestNodes()
-
 
 
 

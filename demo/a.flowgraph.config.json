@@ -3,7 +3,7 @@
         "1": {
             "type": "node-post",
             "url": "http://127.0.0.1:12082/exec",
-            "messege": "return Json.stringify({code:content,filename:filename})",
+            "payload": "return ({code:__content__,filename:__filename__})",
             "show": "Json.parse(ret);return ret.output+\"\\n\"+ret.error"
         },
         "2": {
@@ -11,8 +11,16 @@
             "filename": "workspace.py"
         },
         "": {
-            "type": "terminal",
-            "messege": "echo filename"
+            "type": "node-terminal",
+            "payload": "return [\"cat\",filename]"
+        },
+        "--": {
+            "type": "node-terminal",
+            "payload": "return [\"sleep\",\"2\"]"
+        },
+        "3": {
+            "type": "vscode-terminal",
+            "message": "cat __filename__"
         }
     },
     "toolbar": [
@@ -261,3 +269,4 @@
         }
     }
 }
+

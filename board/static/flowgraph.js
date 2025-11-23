@@ -78,7 +78,7 @@ export const fg = {
         Runtype: {
             "": {
                 type: 'terminal',
-                messege: 'echo filename'
+                message: 'echo __filename__'
             },
         }
     },

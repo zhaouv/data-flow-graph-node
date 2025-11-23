@@ -2,8 +2,9 @@ const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
 
-const foldStart = '<!-- #region flowgraph -->'
-const foldEnd = '<!-- #endregion -->'
+const { spawnSync } = require('child_process');
+
+const post = require('./post').postAsync;
 
 function getRandomString() {
   let text = '';
@@ -14,7 +15,6 @@ function getRandomString() {
   return text;
 }
 const getNonce = getRandomString;
-const generateSVGName = getRandomString;
 
 function foldingMod() {
   return vscode.workspace.getConfiguration('flowgraph')['auto-folding']
@@ -57,7 +57,7 @@ function activate(context) {
 
   function showText(text) {
     if (showTextPanel == undefined || showTextPanel.isClosed) {
-      vscode.workspace.openTextDocument({
+      return vscode.workspace.openTextDocument({
         content: text,
         encoding: 'utf8', language: 'log'
       }).then(document => {
@@ -69,7 +69,7 @@ function activate(context) {
         )
       })
     } else {
-      vscode.window.showTextDocument(
+      return vscode.window.showTextDocument(
         showTextPanel,
         vscode.ViewColumn.One,
         true
@@ -91,8 +91,8 @@ function activate(context) {
       nodes = fgobj.nodes
       let configPath = path.join(path.dirname(activeTextEditor.document.fileName), fgobj.config)
       if (!fs.existsSync(configPath)) {
-        configPath=fgobj.config
-        if(!!fs.existsSync(configPath)){
+        configPath = fgobj.config
+        if (!!fs.existsSync(configPath)) {
           vscode.window.showErrorMessage('配置文件不存在');
           return '';
         }
@@ -179,13 +179,65 @@ function activate(context) {
     );
   }
 
-  function runFiles(files) {
-    let output=[]
+  /** @type {vscode.Terminal | undefined} */
+  let terminal = undefined;
+  function runTerminal(message) {
+    if (!terminal || terminal.exitStatus) terminal = vscode.window.createTerminal({
+      name: 'Flow Graph',
+      cwd: path.dirname(currentEditor.document.fileName)
+    });
+    terminal.show();
+    terminal.sendText(message);
+  }
+
+  // 这个函数要async化
+  async function runFiles(files) {
+    let display = []
     for (const file of files) {
-      let {rid,rconfig,filename,submitTick}=file
-      output.push(JSON.stringify(file,null,4))
+
+      let { rid, rconfig, filename, submitTick } = file
+      display.push(JSON.stringify(file, null, 4))
+      display.push(new Date().getTime()+': running...')
+      await showText(display.join('\n\n'))
+
+      let fullname = path.join(path.dirname(currentEditor.document.fileName), filename)
+      let content = fs.readFileSync(fullname, { encoding: 'utf8' })
+
+      function buildPayload(text) {
+        let func = new Function('filename', 'fullname', 'content', text)
+        return func(filename, fullname, content)
+      }
+
+      if (rconfig.type === 'vscode-terminal') {
+        let message = rconfig.message.replaceAll('__filename__', filename).replaceAll('__fullname__', fullname).replaceAll('__content__', content)
+        runTerminal(message)
+        continue
+      }
+      if (rconfig.type === 'node-terminal') {
+        let payload = buildPayload(rconfig.payload)
+        const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: path.dirname(currentEditor.document.fileName)});
+        // display.push(JSON.stringify(result))
+        if (result.status === 0) {
+          display.push(new Date().getTime()+': '+result.stdout.toString());
+        } else {
+          throw new Error(result.stderr.toString());
+        }
+        continue
+      }
+      if (rconfig.type === 'node-post') {
+        let payload = buildPayload(rconfig.payload)
+        let ret = await post(
+          rconfig.url,
+          payload,
+        );
+        display.push(new Date().getTime()+': '+new Function('ret', rconfig.show)(ret))
+        continue
+      }
+      if (rconfig.type === 'concat') {
+        continue
+      }
     }
-    showText(output.join('\n\n'))
+    await showText(display.join('\n\n'))
   }
 
   context.subscriptions.push(

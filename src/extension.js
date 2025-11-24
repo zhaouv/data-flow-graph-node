@@ -54,6 +54,7 @@ function activate(context) {
   let fgobj = undefined
   let config = undefined
   let nodes = undefined
+  let recordobj = undefined
 
   function showText(text) {
     if (showTextPanel == undefined || showTextPanel.isClosed) {
@@ -197,7 +198,7 @@ function activate(context) {
 
       let { rid, rconfig, filename, submitTick } = file
       display.push(JSON.stringify(file, null, 4))
-      display.push(new Date().getTime()+': running...')
+      display.push(new Date().getTime() + ': running...')
       await showText(display.join('\n\n'))
 
       let fullname = path.join(path.dirname(currentEditor.document.fileName), filename)
@@ -215,10 +216,10 @@ function activate(context) {
       }
       if (rconfig.type === 'node-terminal') {
         let payload = buildPayload(rconfig.payload)
-        const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: path.dirname(currentEditor.document.fileName)});
+        const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: path.dirname(currentEditor.document.fileName) });
         // display.push(JSON.stringify(result))
         if (result.status === 0) {
-          display.push(new Date().getTime()+': '+result.stdout.toString());
+          display.push(new Date().getTime() + ': ' + result.stdout.toString());
         } else {
           throw new Error(result.stderr.toString());
         }
@@ -230,10 +231,13 @@ function activate(context) {
           rconfig.url,
           payload,
         );
-        display.push(new Date().getTime()+': '+new Function('ret', rconfig.show)(ret))
+        display.push(new Date().getTime() + ': ' + new Function('ret', rconfig.show)(ret))
         continue
       }
       if (rconfig.type === 'concat') {
+        let targetPath = path.join(path.dirname(currentEditor.document.fileName), rconfig.filename)
+        fs.writeFileSync(targetPath, content+'\n', { encoding: 'utf8', flag: 'a' })
+        display.push(new Date().getTime() + ': write to ' + rconfig.filename);
         continue
       }
     }
@@ -241,7 +245,7 @@ function activate(context) {
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('flowgraph.editCurrentLineAsSVG', () => {
+    vscode.commands.registerCommand('flowgraph.editFlowGraph', () => {
       if (currentPanel) {
         currentPanel.reveal();
       } else {

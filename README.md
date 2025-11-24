@@ -34,7 +34,7 @@ _pos记录位置
 
 插件内部需要维护一个state 存运行结果/状态 以及界面状态等等
 
-运行流程:
+打开流程:
 打开文件xxx.flowgraph.json, 右键菜单或者f1执行命令
 插件加载xxx.flowgraph.json, 其中包含xxx.flowgraph.config.json的路径, 也打开加载
 flowgraph->carddata
@@ -45,6 +45,13 @@ webview:requestNodes 拿到carddata
 webview:requestState 此时暂时时空白/加载运行数据
 
 用retainContextWhenHidden: true来避免离屏幕销毁了, 多占点内存省事
+
+运行流程
+点击运行或运行链
+webview:runFiles
+await依次执行, 每执行完一个showText加上ext:result
+全部完成后ext:record
+(中间如果出现过删除节点?)
 
 > 编辑先做到这个程度, 做运行有关的东西
 

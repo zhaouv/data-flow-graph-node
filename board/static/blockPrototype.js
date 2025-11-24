@@ -13,7 +13,7 @@ export const blockPrototype =
             type: "multi",
             value: "MultiString_default"
         },
-        EditSelect: {
+        Runfile: {
             type: "editabledroplist",
             options: [
                 ["", ""],
@@ -22,7 +22,7 @@ export const blockPrototype =
             value: ""
         },
         Runtype: {
-            type: "droplist",
+            type: "editabledroplist",
             options: [
                 ["", ""],
                 ["1", "1"],
@@ -37,7 +37,7 @@ export const blockPrototype =
             run: '%1\n%2\n%3',
             args: [
                 { name: 'comment', type: 'MultiString', value: 'comment' },
-                { name: 'filename', type: 'EditSelect', value: 'a.py' },
+                { name: 'filename', type: 'Runfile', value: 'a.py' },
                 { name: 'snapshot', type: 'Snapshot', value: null },
                 { name: 'runtype', type: 'Runtype', value: '' },
             ],

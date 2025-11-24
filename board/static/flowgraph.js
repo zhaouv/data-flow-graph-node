@@ -72,7 +72,7 @@ export const fg = {
     moveSetting: { down: 1 },
     mode: { edit: 1, run: -1 },
     // state: {},
-    record: {},
+    record: [],
     connectAPI:connectAPI,
     config: {
         Runtype: {
@@ -450,7 +450,7 @@ export const fg = {
         let node = fg.nodes[index]
         let toshow=Array.isArray(node.filename) ? node.filename[0] : node.filename
         toshow+='\n'
-        if (index in fg.record) {
+        if (index in fg.record && fg.record[index]) {
             toshow+=JSON.stringify(fg.record[index],null,4)
         } else {
             toshow+='null'

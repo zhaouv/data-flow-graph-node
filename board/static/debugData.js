@@ -58,21 +58,21 @@ export const config = {
     toolbar: toolbarData,
     blockPrototype: blockPrototype,
     Runtype: {
-        "2": {
+        "": {
             type: 'node-post',
             url: 'http://127.0.0.1:12082/exec',
-            payload: 'return ({code:__content__,filename:__filename__})',
-            show: 'Json.parse(ret);return ret.output+"\\n"+ret.error'
+            payload: 'return ({code:content,filename:filename})',
+            show: 'return ret.output+"\\n"+ret.error'
         },
-        "1": {
+        "vt": {
             type: 'vscode-terminal',
             message: 'cat __filename__'
         },
-        "": {
+        "nt": {
             type: 'node-terminal',
             payload: 'return ["cat",filename]'
         },
-        "3": {
+        "c": {
             type: 'concat',
             filename: 'workspace.py'
         },

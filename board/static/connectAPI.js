@@ -105,7 +105,7 @@ globalThis.addEventListener('message', event => {
     connectAPI.send = (x) => {
       vscode.postMessage(x)
     }
-    vscode.postMessage({ command: 'requestCustom' })
+    // vscode.postMessage({ command: 'requestCustom' })
     connectAPI.isDebug=false
   } else {
     // local test

@@ -22,13 +22,13 @@
 		"graph"
 	],
 	"activationEvents": [
-		"onCommand:flowgraph.editCurrentLineAsSVG"
+		"onCommand:flowgraph.editFlowGraph"
 	],
 	"main": "./src/extension",
 	"contributes": {
 		"commands": [
 			{
-				"command": "flowgraph.editCurrentLineAsSVG",
+				"command": "flowgraph.editFlowGraph",
 				"title": "flow graph",
 				"category": "flow graph"
 			}
@@ -36,7 +36,7 @@
 		"menus": {
 			"editor/context": [
 				{
-					"command": "flowgraph.editCurrentLineAsSVG",
+					"command": "flowgraph.editFlowGraph",
 					"when": "editorFocus",
 					"group": "7_modification"
 				}

@@ -1,7 +1,9 @@
+
 [
     {
         "text": "a",
         "filename": "a.py",
+        "snapshot": true,
         "_pos": {
             "left": 0,
             "top": 0,
@@ -17,6 +19,7 @@
     {
         "text": "b",
         "filename": "b.py",
+        "snapshot": true,
         "_pos": {
             "left": 200,
             "top": 0,

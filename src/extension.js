@@ -224,10 +224,18 @@ function activate(context) {
       ctx.doneTick = new Date().getTime()
       if (error != null) {
         ctx.error = error.stack
+        display.push(ctx.doneTick + ': ' + error.stack)
       } else {
         ctx.output = text
+        display.push(ctx.doneTick + ': ' + text)
+        if (ctx.snapshot != null) {
+          if (ctx.snapshot in record.current && record.current[ctx.snapshot].snapshot) {
+            ctx.snapshot = record.current[ctx.snapshot].snapshot
+          } else {
+            ctx.snapshot = 100000 + ~~(Math.random() * 100000000)
+          }
+        }
       }
-      display.push(ctx.doneTick + ': ' + text)
       currentPanel.webview.postMessage({ command: 'result', content: ctx });
       record.history.push(ctx)
       record.current[ctx.index] = ctx
@@ -236,7 +244,7 @@ function activate(context) {
     try {
       for (const file of files) {
 
-        let { rid, index, rconfig, filename, submitTick } = file
+        let { rconfig, filename } = file
         ctx = Object.assign({}, file)
         display.push(JSON.stringify(file, null, 4))
         setRunTick(ctx)
@@ -287,7 +295,7 @@ function activate(context) {
     }
     await showText(display.join('\n\n'))
     currentPanel.webview.postMessage({ command: 'record', content: record.current });
-    fs.writeFileSync(recordPath, JSON.stringify(record,null,4), { encoding: 'utf8' });
+    fs.writeFileSync(recordPath, JSON.stringify(record, null, 4), { encoding: 'utf8' });
   }
 
   context.subscriptions.push(

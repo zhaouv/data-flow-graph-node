@@ -80,8 +80,8 @@ export const config = {
 }
 
 export const cardData = [
-    { text: "a", filename: "a.py", _pos: { left: 0, top: 0, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
-    { text: "b", filename: "b.py", _pos: { left: 200, top: 0, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
+    { text: "a", filename: "a.py", snapshot: true, _pos: { left: 0, top: 0, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
+    { text: "b", filename: "b.py", snapshot: true, _pos: { left: 200, top: 0, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
     { text: "c", filename: "c.py", _pos: { left: 200, top: 100, width: 100, height: 100 }, _linkTo: { next: { "1": "previous" } } },
     { text: "d", filename: "d.py", snapshot: true, _pos: { left: 0, top: 100, width: 100, height: 100 }, _linkTo: { next: { "1": "previous", "2": "previous" } } },
     { text: "e1", filename: "e1.py", _pos: { left: 0, top: 200, width: 100, height: 100 }, _linkTo: { next: { "2": "previous" } } },

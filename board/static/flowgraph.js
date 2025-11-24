@@ -138,11 +138,17 @@ export const fg = {
             // card.setAttribute('index', index+fg.nodes.length)
 
             const text = document.createElement('p');
-            text.innerText = item.text + '\n' + item.filename + (item.snapshot ? '\nsnap' : '');
+            text.innerText = item.text + '\n' + item.filename;
 
             fg.setCardPos(card, item._pos)
 
             card.appendChild(text);
+            if (item.snapshot) {
+                const snap = document.createElement('snap');
+                snap.innerText = 'snap';
+                // snap.style.background='#aaa'
+                card.appendChild(snap);
+            }
 
             contentElement.appendChild(card);
 
@@ -436,16 +442,29 @@ export const fg = {
             let runtype = node.runtype ? node.runtype[0] : ''
             let rconfig = fg.config.Runtype[runtype]
             let filename = Array.isArray(node.filename) ? node.filename[0] : node.filename
-            let ret = { rid, index, rconfig, filename, submitTick }
+            let snapshot = null
+            if (node.snapshot) {
+                snapshot = 'head'
+                for (let si = 0; si < fg.nodes.length; si++) {
+                    if (fg.link[si][index].length) {
+                        snapshot = si
+                        break
+                    }
+                }
+            }
+            let ret = { rid, index, snapshot, rconfig, filename, submitTick }
             fg.record[index] = ret
             return ret
         })
         fg.connectAPI.send({ command: 'runFiles', files: files })
     },
-    addResult(ret) {
-        let record = fg.record.filter(v => v.rid == ret.rid)
+    addResult(ctx) {
+        let record = fg.record.filter(v => v.rid == ctx.rid)
         if (record.length) {
-            Object.assign(record[0], ret)
+            Object.assign(record[0], ctx)
+            let index = fg.record.indexOf(record[0])
+
+            contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
         }
         // 提醒放在node侧, web侧不做提醒
     },
@@ -467,6 +486,15 @@ export const fg = {
         }
         connectAPI.showText(toshow)
     },
+    setRecord(record) {
+        fg.record = record
+        record.forEach((ctx, index) => {
+            if (ctx.snapshot) {
+
+                contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
+            }
+        })
+    },
     print(obj) {
         let print = fg.connectAPI.isDebug ? console.log : connectAPI.showText
         typeof obj == typeof '' ? print(obj) : print('\n\n\n\n' + JSON.stringify(obj, null, 4) + '\n\n\n\n')
@@ -479,9 +507,9 @@ export const fg = {
         fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'
         fg.connectAPI.recieve.nodes = 'fg.addContent(message.content);fg.requestRecord()'
         fg.connectAPI.recieve.result = 'fg.addResult(message.content);'
-        fg.connectAPI.recieve.record = 'fg.record=message.content;'
+        fg.connectAPI.recieve.record = 'fg.setRecord(message.content);'
         fg.requestConfig()
-        
+
     },
 };
 

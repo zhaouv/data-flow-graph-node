@@ -73,7 +73,7 @@ export const fg = {
     mode: { edit: 1, run: -1 },
     // state: {},
     record: [],
-    connectAPI:connectAPI,
+    connectAPI: connectAPI,
     config: {
         Runtype: {
             "": {
@@ -153,9 +153,9 @@ export const fg = {
         fg.setAsCurrentCard(fg.nodes.length - 1)
         fg.firstAddContent()
     },
-    firstAddContent(){
-        if(globalThis.__firstAddContent_has_run)return
-        globalThis.__firstAddContent_has_run=1
+    firstAddContent() {
+        if (globalThis.__firstAddContent_has_run) return
+        globalThis.__firstAddContent_has_run = 1
         document.querySelector(".content-container").scrollLeft = 200
     },
     setAsCurrentCard(index) {
@@ -419,57 +419,69 @@ export const fg = {
     // requestState(){
     //     connectAPI.send({ command: 'requestState' })
     // },
-    requestConfig(){
+    requestConfig() {
         connectAPI.send({ command: 'requestConfig' })
     },
-    requestNodes(){
+    requestNodes() {
         connectAPI.send({ command: 'requestNodes' })
     },
+    requestRecord() {
+        connectAPI.send({ command: 'requestRecord' })
+    },
     runNodes(indexes) {
-        let files=indexes.map(index=>{
+        let files = indexes.map(index => {
             let node = fg.nodes[index]
             let rid = fg.getRandomString()
             let submitTick = new Date().getTime()
-            let runtype = node.runtype?node.runtype[0]:''
+            let runtype = node.runtype ? node.runtype[0] : ''
             let rconfig = fg.config.Runtype[runtype]
-            let filename=Array.isArray(node.filename) ? node.filename[0] : node.filename
-            let ret={rid,rconfig,filename,submitTick}
-            fg.record[index]=ret
+            let filename = Array.isArray(node.filename) ? node.filename[0] : node.filename
+            let ret = { rid, index, rconfig, filename, submitTick }
+            fg.record[index] = ret
             return ret
         })
         fg.connectAPI.send({ command: 'runFiles', files: files })
     },
-    addResult(ret){
-        let record=fg.record.filter(v=>v.rid==ret.rid)
+    addResult(ret) {
+        let record = fg.record.filter(v => v.rid == ret.rid)
         if (record.length) {
-            Object.assign(record[0],ret)
+            Object.assign(record[0], ret)
         }
         // 提醒放在node侧, web侧不做提醒
     },
-    showResult(index){
+    showResult(index) {
         let node = fg.nodes[index]
-        let toshow=Array.isArray(node.filename) ? node.filename[0] : node.filename
-        toshow+='\n'
+        let toshow = Array.isArray(node.filename) ? node.filename[0] : node.filename
+        toshow += '\n'
         if (index in fg.record && fg.record[index]) {
-            toshow+=JSON.stringify(fg.record[index],null,4)
+            let ctx = fg.record[index]
+            toshow += JSON.stringify(ctx, null, 4)
+            if (ctx.output) {
+                toshow += '\n\n' + ctx.output
+            }
+            if (ctx.error) {
+                toshow += '\n\n' + ctx.error
+            }
         } else {
-            toshow+='null'
+            toshow += 'null'
         }
         connectAPI.showText(toshow)
     },
-    print(obj){
-        let print=fg.connectAPI.isDebug?console.log:connectAPI.showText
-        typeof obj == typeof ''?print(obj):print('\n\n\n\n'+JSON.stringify(obj,null,4)+'\n\n\n\n')
+    print(obj) {
+        let print = fg.connectAPI.isDebug ? console.log : connectAPI.showText
+        typeof obj == typeof '' ? print(obj) : print('\n\n\n\n' + JSON.stringify(obj, null, 4) + '\n\n\n\n')
     },
     setConfig(config) {
         Object.assign(fg.config, config)
         fg.addToolbar(config.toolbar)
     },
-    setupConnect(){
-        fg.connectAPI.recieve.config='fg.setConfig(message.content);fg.requestNodes()'
-        fg.connectAPI.recieve.nodes='fg.addContent(message.content);'
-        fg.connectAPI.recieve.result='fg.addResult(message.content);'
+    setupConnect() {
+        fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'
+        fg.connectAPI.recieve.nodes = 'fg.addContent(message.content);fg.requestRecord()'
+        fg.connectAPI.recieve.result = 'fg.addResult(message.content);'
+        fg.connectAPI.recieve.record = 'fg.record=message.content;'
         fg.requestConfig()
+        
     },
 };
 

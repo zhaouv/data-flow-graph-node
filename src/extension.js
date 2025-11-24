@@ -54,7 +54,8 @@ function activate(context) {
   let fgobj = undefined
   let config = undefined
   let nodes = undefined
-  let recordobj = undefined
+  let recordPath = undefined
+  let record = undefined
 
   function showText(text) {
     if (showTextPanel == undefined || showTextPanel.isClosed) {
@@ -99,9 +100,14 @@ function activate(context) {
         }
       }
       config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }))
+      recordPath = path.join(path.dirname(activeTextEditor.document.fileName), fgobj.record)
+      if (!fs.existsSync(recordPath)) {
+        fs.writeFileSync(recordPath, '{"current":[],"history":[]}', { encoding: 'utf8' });
+      }
+      record = JSON.parse(fs.readFileSync(recordPath, { encoding: 'utf8' }))
       // vscode.window.showInformationMessage('config:'+JSON.stringify(config))
     } catch (error) {
-      vscode.window.showErrorMessage('' + error);
+      vscode.window.showErrorMessage(error.stack);
     }
 
     // vscode.window.showInformationMessage(activeTextEditor.document.fileName)
@@ -155,6 +161,9 @@ function activate(context) {
           case 'requestNodes':
             currentPanel.webview.postMessage({ command: 'nodes', content: nodes });
             return;
+          case 'requestRecord':
+            currentPanel.webview.postMessage({ command: 'record', content: record.current });
+            return;
           case 'runFiles':
             runFiles(message.files)
             return;
@@ -194,54 +203,78 @@ function activate(context) {
   // 这个函数要async化
   async function runFiles(files) {
     let display = []
-    for (const file of files) {
-
-      let { rid, rconfig, filename, submitTick } = file
-      display.push(JSON.stringify(file, null, 4))
-      display.push(new Date().getTime() + ': running...')
-      await showText(display.join('\n\n'))
-
-      let fullname = path.join(path.dirname(currentEditor.document.fileName), filename)
-      let content = fs.readFileSync(fullname, { encoding: 'utf8' })
-
-      function buildPayload(text) {
-        let func = new Function('filename', 'fullname', 'content', text)
-        return func(filename, fullname, content)
+    function setRunTick(ctx) {
+      ctx.runTick = new Date().getTime()
+      display.push(ctx.runTick + ': running...')
+    }
+    function setDoneTick(ctx, text, error = null) {
+      ctx.doneTick = new Date().getTime()
+      if (error != null) {
+        ctx.error = error.stack
+      } else {
+        ctx.output = text
       }
+      display.push(ctx.doneTick + ': ' + text)
+      currentPanel.webview.postMessage({ command: 'result', content: ctx });
+      record.history.push(ctx)
+      record.current[ctx.index] = ctx
+    }
+    let ctx = {};
+    try {
+      for (const file of files) {
 
-      if (rconfig.type === 'vscode-terminal') {
-        let message = rconfig.message.replaceAll('__filename__', filename).replaceAll('__fullname__', fullname).replaceAll('__content__', content)
-        runTerminal(message)
-        continue
-      }
-      if (rconfig.type === 'node-terminal') {
-        let payload = buildPayload(rconfig.payload)
-        const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: path.dirname(currentEditor.document.fileName) });
-        // display.push(JSON.stringify(result))
-        if (result.status === 0) {
-          display.push(new Date().getTime() + ': ' + result.stdout.toString());
-        } else {
-          throw new Error(result.stderr.toString());
+        let { rid, index, rconfig, filename, submitTick } = file
+        ctx = Object.assign({}, file)
+        display.push(JSON.stringify(file, null, 4))
+        setRunTick(ctx)
+        await showText(display.join('\n\n'))
+
+        let fullname = path.join(path.dirname(currentEditor.document.fileName), filename)
+        let content = fs.readFileSync(fullname, { encoding: 'utf8' })
+
+        function buildPayload(text) {
+          let func = new Function('filename', 'fullname', 'content', text)
+          return func(filename, fullname, content)
         }
-        continue
+
+        if (rconfig.type === 'vscode-terminal') {
+          let message = rconfig.message.replaceAll('__filename__', filename).replaceAll('__fullname__', fullname).replaceAll('__content__', content)
+          runTerminal(message)
+          continue
+        }
+        if (rconfig.type === 'node-terminal') {
+          let payload = buildPayload(rconfig.payload)
+          const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: path.dirname(currentEditor.document.fileName) });
+          // display.push(JSON.stringify(result))
+          if (result.status === 0) {
+            setDoneTick(ctx, result.stdout.toString())
+          } else {
+            throw new Error(result.stderr.toString());
+          }
+          continue
+        }
+        if (rconfig.type === 'node-post') {
+          let payload = buildPayload(rconfig.payload)
+          let ret = await post(
+            rconfig.url,
+            payload,
+          );
+          setDoneTick(ctx, new Function('ret', rconfig.show)(ret))
+          continue
+        }
+        if (rconfig.type === 'concat') {
+          let targetPath = path.join(path.dirname(currentEditor.document.fileName), rconfig.filename)
+          fs.writeFileSync(targetPath, content + '\n', { encoding: 'utf8', flag: 'a' })
+          setDoneTick(ctx, 'write to ' + rconfig.filename)
+          continue
+        }
       }
-      if (rconfig.type === 'node-post') {
-        let payload = buildPayload(rconfig.payload)
-        let ret = await post(
-          rconfig.url,
-          payload,
-        );
-        display.push(new Date().getTime() + ': ' + new Function('ret', rconfig.show)(ret))
-        continue
-      }
-      if (rconfig.type === 'concat') {
-        let targetPath = path.join(path.dirname(currentEditor.document.fileName), rconfig.filename)
-        fs.writeFileSync(targetPath, content+'\n', { encoding: 'utf8', flag: 'a' })
-        display.push(new Date().getTime() + ': write to ' + rconfig.filename);
-        continue
-      }
+    } catch (error) {
+      setDoneTick(ctx, error.stack, error)
     }
     await showText(display.join('\n\n'))
+    currentPanel.webview.postMessage({ command: 'record', content: record.current });
+    fs.writeFileSync(recordPath, JSON.stringify(record,null,4), { encoding: 'utf8' });
   }
 
   context.subscriptions.push(

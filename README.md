@@ -39,10 +39,10 @@ _pos记录位置
 插件加载xxx.flowgraph.json, 其中包含xxx.flowgraph.config.json的路径, 也打开加载
 flowgraph->carddata
 flowgraph.config->config
-拉起webview/webview重载
+拉起webview
 webview:requestConfig 拿到config
 webview:requestNodes 拿到carddata
-webview:requestState 此时暂时时空白/加载运行数据
+webview:requestRecord 
 
 用retainContextWhenHidden: true来避免离屏幕销毁了, 多占点内存省事
 
@@ -51,6 +51,7 @@ webview:requestState 此时暂时时空白/加载运行数据
 webview:runFiles
 await依次执行, 每执行完一个showText加上ext:result
 全部完成后ext:record
+(暂未添加快照的处理, ?引入目录监测)
 (中间如果出现过删除节点?)
 
 > 编辑先做到这个程度, 做运行有关的东西

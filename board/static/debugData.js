@@ -62,7 +62,7 @@ export const config = {
             type: 'node-post',
             url: 'http://127.0.0.1:12082/exec',
             payload: 'return ({code:content,filename:filename})',
-            show: 'return ret.output+"\\n"+ret.error'
+            show: 'if(ret.error)throw new Error(ret.error);return ret.output'
         },
         "vt": {
             type: 'vscode-terminal',

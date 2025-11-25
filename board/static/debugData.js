@@ -19,7 +19,7 @@ const toolbarData = [
 
         { text: '?启用', class: 'run', click: 'console.log("尚未实现")' },
 
-        { text: '?重置快照链', class: 'run', click: 'console.log("尚未实现")' },
+        { text: '重置快照链', class: 'run', click: 'fg.clearSnapshotChain(fg.currentCard.index)' },
 
 
 
@@ -45,7 +45,7 @@ const toolbarData = [
         { text: '删除', class: 'edit', click: 'fg.removeNode(fg.currentCard.index)' },
 
         { text: '?禁用', class: 'run', click: 'console.log("尚未实现")' },
-        { text: '?运行链', class: 'run', click: 'console.log("尚未实现")' },
+        { text: '运行链', class: 'run', click: 'fg.runNodeChain(fg.currentCard.index)' },
         { text: '运行', class: 'run', click: 'fg.runNodes([fg.currentCard.index])' },
         { text: '结果', class: 'run', click: 'fg.showResult(fg.currentCard.index)' },
 

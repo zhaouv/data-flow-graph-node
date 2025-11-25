@@ -197,24 +197,9 @@ export const fg = {
             moveNode(node)
             fg.resetCurrentCardPos()
         } else {
-            let nodes = []
-            function getnodes(v) {
-                nodes.push(v)
-                let lsindex = fg.nodes.indexOf(v)
-                if (v._linkTo) for (let lsname in v._linkTo) {
-                    for (let deltai in v._linkTo[lsname]) {
-                        // let lename = v._linkTo[lsname][deltai]
-                        let leindex = lsindex + ~~deltai
-                        if (leindex >= 0 && leindex < fg.nodes.length) {
-                            let vv = fg.nodes[leindex]
-                            if (vv._pos.left >= node._pos.left && vv._pos.top >= node._pos.top && nodes.indexOf(vv) === -1) {
-                                getnodes(vv)
-                            }
-                        }
-                    }
-                }
-            }
-            getnodes(node)
+            let nodes = fg.findNodeForward(fg.currentCard.index, (vv)=>{
+                return vv._pos.left >= node._pos.left && vv._pos.top >= node._pos.top
+            })
             nodes.forEach(v => {
                 moveNode(v)
                 fg.setCardPos(contentElement.children[fg.nodes.indexOf(v)], v._pos)
@@ -359,6 +344,48 @@ export const fg = {
         contentElement.children[index].remove()
         fg.buildLines() // 理论上只应该重连涉及的图块的线,有需求再优化
     },
+    findNodeBackward(index, filterFunc) {
+        if(filterFunc==null)filterFunc=()=>true
+        let nodes = [] // just for hash
+        let ret = []
+        function getnodes(v) {
+            nodes.push(v)
+            let leindex = fg.nodes.indexOf(v)
+            for (let lsindex = 0; lsindex < fg.nodes.length; lsindex++) {
+                if (fg.link[lsindex][leindex].length) {
+                    let vv = fg.nodes[lsindex]
+                    if (nodes.indexOf(vv) === -1 && filterFunc(vv)) {
+                        getnodes(vv)
+                    }
+                }
+            }
+            ret.push(v)
+        }
+        getnodes(fg.nodes[index])
+        return ret
+    },
+    findNodeForward(index, filterFunc) {
+        if(filterFunc==null)filterFunc=()=>true
+        let nodes = []
+        function getnodes(v) {
+            nodes.push(v)
+            let lsindex = fg.nodes.indexOf(v)
+            if (v._linkTo) for (let lsname in v._linkTo) {
+                for (let deltai in v._linkTo[lsname]) {
+                    // let lename = v._linkTo[lsname][deltai]
+                    let leindex = lsindex + ~~deltai
+                    if (leindex >= 0 && leindex < fg.nodes.length) {
+                        let vv = fg.nodes[leindex]
+                        if (nodes.indexOf(vv) === -1 && filterFunc(vv)) {
+                            getnodes(vv)
+                        }
+                    }
+                }
+            }
+        }
+        getnodes(fg.nodes[index])
+        return nodes
+    },
     copyAndLink(index) {
         let node = JSON.parse(JSON.stringify(fg.nodes[index]))
         delete node._linkTo
@@ -442,31 +469,37 @@ export const fg = {
             let runtype = node.runtype ? node.runtype[0] : ''
             let rconfig = fg.config.Runtype[runtype]
             let filename = Array.isArray(node.filename) ? node.filename[0] : node.filename
-            let snapshot = null
-            if (node.snapshot) {
-                snapshot = 'head'
-                for (let si = 0; si < fg.nodes.length; si++) {
-                    if (fg.link[si][index].length) {
-                        snapshot = si
-                        break
-                    }
+            let snapshot = 'head'
+            for (let si = 0; si < fg.nodes.length; si++) {
+                if (fg.link[si][index].length) {
+                    snapshot = si
+                    break
                 }
             }
+
             let ret = { rid, index, snapshot, rconfig, filename, submitTick }
             fg.record[index] = ret
             return ret
         })
         fg.connectAPI.send({ command: 'runFiles', files: files })
     },
+    runNodeChain(index){
+        let nodes=fg.findNodeBackward(index,(v)=>{
+            let index=fg.nodes.indexOf(v)
+            return !(fg.record[index] && fg.record[index].snapshot)
+        })
+        fg.runNodes(nodes.map(v=>fg.nodes.indexOf(v)))
+    },
     addResult(ctx) {
         let record = fg.record.filter(v => v.rid == ctx.rid)
         if (record.length) {
             Object.assign(record[0], ctx)
             let index = fg.record.indexOf(record[0])
-
-            contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
+            if (fg.nodes[index].snapshot) {
+                contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
+            }
         }
-        // 提醒放在node侧, web侧不做提醒
+        // 提醒放在node侧, web侧只改节点颜色
     },
     showResult(index) {
         let node = fg.nodes[index]
@@ -489,11 +522,23 @@ export const fg = {
     setRecord(record) {
         fg.record = record
         record.forEach((ctx, index) => {
-            if (ctx.snapshot) {
+            if (fg.nodes[index].snapshot) {
 
-                contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
+                contentElement.children[index].querySelector('snap').style.background = ctx.snapshot?`rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`:''
             }
         })
+    },
+    clearSnapshotChain(index){
+        let nodes=fg.findNodeForward(index)
+        let indexes=[]
+        nodes.forEach(v=>{
+            let index=fg.nodes.indexOf(v)
+            let record=fg.record[index]
+            if(record && record.snapshot){
+                indexes.push(index)
+            }
+        })
+        fg.connectAPI.send({ command: 'clearSnapshot', indexes: indexes })
     },
     print(obj) {
         let print = fg.connectAPI.isDebug ? console.log : connectAPI.showText

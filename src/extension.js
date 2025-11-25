@@ -180,6 +180,11 @@ function activate(context) {
           case 'runFiles':
             runFiles(message.files)
             return;
+          case 'clearSnapshot':
+            message.indexes.forEach(ii=>delete record.current[ii].snapshot)
+            currentPanel.webview.postMessage({ command: 'record', content: record.current });
+            fs.writeFileSync(recordPath, JSON.stringify(record, null, 4), { encoding: 'utf8' });
+            return;
           // case 'saveState':
           //   webviewState = message.state;
           //   return;

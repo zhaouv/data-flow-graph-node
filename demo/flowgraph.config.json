@@ -1,4 +1,3 @@
-
 {
     "Runtype": {
         "": {
@@ -76,9 +75,9 @@
                 "click": "console.log(\"尚未实现\")"
             },
             {
-                "text": "?重置快照链",
+                "text": "重置快照链",
                 "class": "run",
-                "click": "console.log(\"尚未实现\")"
+                "click": "fg.clearSnapshotChain(fg.currentCard.index)"
             },
             {
                 "text": "测试1-打印nodes",
@@ -144,9 +143,9 @@
                 "click": "console.log(\"尚未实现\")"
             },
             {
-                "text": "?运行链",
+                "text": "运行链",
                 "class": "run",
-                "click": "console.log(\"尚未实现\")"
+                "click": "fg.runNodeChain(fg.currentCard.index)"
             },
             {
                 "text": "运行",

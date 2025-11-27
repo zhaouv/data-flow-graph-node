@@ -139,6 +139,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 
-board/ai-demo.html
+board/ai-demo*.html
 board/static/testdata.js
 *.record.json

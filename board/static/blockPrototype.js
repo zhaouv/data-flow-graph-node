@@ -2,7 +2,7 @@ const blockPrototype =
 {
     blocks: {
         NormalString: {
-            type: "input",
+            type: "string",
             value: "NormalString_default"
         },
         Snapshot: {
@@ -10,11 +10,11 @@ const blockPrototype =
             value: null
         },
         MultiString: {
-            type: "multi",
+            type: "multi_string",
             value: "MultiString_default"
         },
         Runfile: {
-            type: "editabledroplist",
+            type: "edit_able_droplist",
             options: [
                 ["", ""],
                 ["1", "1"],
@@ -22,7 +22,7 @@ const blockPrototype =
             value: ""
         },
         Runtype: {
-            type: "editabledroplist",
+            type: "edit_able_droplist",
             options: [
                 ["", ""],
                 ["1", "1"],
@@ -33,13 +33,12 @@ const blockPrototype =
         },
         runfile: {
             type: 'runfile',
-            message: '%1\n%2\n%3 %4',
-            run: '%1\n%2\n%3',
+            message: '%1\n%2\n%3%r%4',
             args: [
-                { name: 'comment', type: 'MultiString', value: 'comment' },
+                { name: 'text', type: 'MultiString', value: 'comment' },
                 { name: 'filename', type: 'Runfile', value: 'a.py' },
-                { name: 'snapshot', type: 'Snapshot', value: null },
-                { name: 'runtype', type: 'Runtype', value: '' },
+                { name: 'runtype', type: 'Runtype', value: '', omitted: true },
+                { name: 'snapshot', type: 'Snapshot', value: null, omitted: true },
             ],
             typename: null,
             checkType: 'args',

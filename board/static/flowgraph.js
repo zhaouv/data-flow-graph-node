@@ -58,7 +58,7 @@ contentElement.addEventListener('click', function (e) {
         console.log(`点击了卡片: ${target.textContent}`);
         let index = Array.prototype.indexOf.call(target.parentNode.children, target)
         fg.setAsCurrentCard(index)
-        fg.clickCard(index)
+        fg.clickCard(index, target, directTarget, e)
     }
 });
 
@@ -73,6 +73,7 @@ export const fg = {
     mode: { edit: -1, run: 1, file: 1 },
     // state: {},
     record: [],
+    savedKey: { _pos: undefined, _linkTo: undefined },
     connectAPI: connectAPI,
     config: {
         Runtype: {
@@ -128,30 +129,96 @@ export const fg = {
             }
         }
     },
-    addContent(nodes) {
-
-        nodes.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'card';
-
-            // card.setAttribute('id', item.id)
-            // card.setAttribute('index', index+fg.nodes.length)
-
-            const text = document.createElement('p');
-            text.innerText = item.text + '\n' + item.filename;
-
-            fg.setCardPos(card, item._pos)
-
-            card.appendChild(text);
-            if (item.snapshot) {
-                const snap = document.createElement('snap');
-                snap.innerText = 'snap';
-                // snap.style.background='#aaa'
-                card.appendChild(snap);
+    guessType(node, range) {
+        if (range == null) {
+            range = Object.keys(fg.config.blockPrototype.blocks).filter(v => /[a-z]/.exec(v.slice(0, 1)))
+        }
+        let args = Object.keys(node).filter(v => Object.keys(fg.savedKey).indexOf(v) == -1)
+        for (const type of range) {
+            let block = fg.config.blockPrototype.blocks[type]
+            if (block.checkType == 'type') {
+                if (node[block.typename] == block.type) return block
             }
+            if (block.checkType == 'args') {
+                let bargs = block.args.map(v => v.name)
+                let bargsnoomited = block.args.filter(v => !v.omitted).map(v => v.name)
+                let allok = args.every(element => bargs.includes(element));
+                let nomiss = bargsnoomited.every(element => args.includes(element));
+                if (allok && nomiss) return block
+            }
+        }
+        return null
+    },
+    buildField(argi, node, block) {
+        let argv = block.args[argi]
+        let field = fg.config.blockPrototype.blocks[argv.type]
+        let value = node[argv.name]
+        let ele=document.createElement(field.type);
+        ele.className = field.type;
+        ele.setAttribute('title', argv.name)
+        if (field.type=='snapshot') {
+            ele.innerText = 's';
+            if (value==null) {
+                ele=''
+            }
+        } else {
+            ele.innerText = value||'';
+        }
+        return ele
+    },
+    buildCard(node, block) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        fg.setCardPos(card, node._pos)
+        if (block == null) {
+            const text = document.createElement('p');
+            text.innerText = JSON.stringify(Object.assign({}, node, fg.savedKey))
+            card.appendChild(text);
+            return
+        }
 
+        let elements = [[]];
+        let eline = elements[0]
+        let message = block.message;
+        for (let ma; ma = /%\d+|\n|%%|%r/.exec(message);) {
+            if (ma.index != 0) eline.push(message.slice(0, ma.index));
+            if (ma[0] == '\n') {
+                eline = []
+                elements.push(eline)
+            } else {
+                eline.push(ma[0])
+            }
+            message = message.slice(ma.index + ma[0].length)
+        }
+        let lastbr;
+        for (const eline of elements) {
+            let lineEle = document.createElement('span');
+            for (let ei of eline) {
+                if (ei == '%%') {
+                    lineEle.append('%')
+                } else if (/^%\d+$/.exec(ei)) {
+                    lineEle.append(fg.buildField(-1 + ~~ei.slice(1), node, block))
+                } else if (ei == '%r') {
+                    card.append(lineEle)
+                    lineEle = document.createElement('span');
+                    lineEle.style.float = 'right'
+                } else {
+                    lineEle.append(ei)
+                }
+            }
+            card.append(lineEle)
+            lastbr = document.createElement('br');
+            lastbr.style.clear = 'both'
+            card.append(lastbr)
+        }
+        lastbr.remove()
+        return card
+    },
+    addContent(nodes) {
+        nodes.forEach((node, index) => {
+            let block = fg.guessType(node)
+            const card = fg.buildCard(node, block)
             contentElement.appendChild(card);
-
         });
         fg.nodes.push(...nodes)
         fg.buildLines()
@@ -430,7 +497,7 @@ export const fg = {
         fg.mode.run *= -1
         fg.mode.edit *= -1
     },
-    clickCard(index) {
+    clickCard(index, card, target, event) {
         // check if send to double click
         let node = fg.nodes[index]
         if (fg.mode.edit > 0) {
@@ -496,7 +563,7 @@ export const fg = {
             Object.assign(record[0], ctx)
             let index = fg.record.indexOf(record[0])
             if (fg.nodes[index].snapshot) {
-                contentElement.children[index].querySelector('snap').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
+                contentElement.children[index].querySelector('snapshot').style.background = `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})`
             }
         }
         // 提醒放在node侧, web侧只改节点颜色
@@ -524,7 +591,7 @@ export const fg = {
         record.forEach((ctx, index) => {
             if (fg.nodes[index].snapshot) {
 
-                contentElement.children[index].querySelector('snap').style.background = ctx.snapshot ? `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})` : ''
+                contentElement.children[index].querySelector('snapshot').style.background = ctx.snapshot ? `rgb(${155 + ctx.snapshot % 100}, ${155 + 2 * ctx.snapshot % 100}, ${155 + 3 * ctx.snapshot % 100})` : ''
             }
         })
     },

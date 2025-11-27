@@ -348,12 +348,15 @@ function activate(context) {
     }
     let ret = { output: [], error: [] }
     outputs.forEach(v => {
-      if (v.output_type == 'stream') {
-        ret.output.push(v.text.join(''))
-      } else if (v.output_type == 'execute_result') {
-        ret.output.push(v.data["text/plain"].join('\n'))
-      } else if (v.output_type == 'error') {
-        ret.error.push(v.traceback.join('\n').replace(/\u001b\[[0-9;]*m/g, ''))
+      try {
+        if (v.output_type == 'stream') {
+          ret.output.push(v.text.join(''))
+        } else if (v.output_type == 'execute_result') {
+          ret.output.push(v.data["text/plain"].join(''))
+        } else if (v.output_type == 'error') {
+          ret.error.push(v.traceback.join('\n').replace(/\u001b\[[0-9;]*m/g, ''))
+        }
+      } catch (error) {
       }
     })
     ret.output = ret.output.join('\n')

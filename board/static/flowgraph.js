@@ -154,7 +154,7 @@ export const fg = {
         let field = fg.config.blockPrototype.blocks[argv.type]
         let value = node[argv.name]
         let ele=document.createElement(field.type);
-        ele.className = field.type;
+        ele.className = 'field-'+field.type;
         ele.setAttribute('title', argv.name)
         if (field.type=='snapshot') {
             ele.innerText = 's';
@@ -176,7 +176,8 @@ export const fg = {
             card.appendChild(text);
             return
         }
-
+        card.className = 'card block-'+block.type;
+        card.setAttribute('block', block.type)
         let elements = [[]];
         let eline = elements[0]
         let message = block.message;

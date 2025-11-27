@@ -1,12 +1,24 @@
-import { config } from './debugData.js'
-import { cardData } from './debugData.js'
-// import { cardData } from "./testdata.js";
 
 import { fg } from './flowgraph.js'
 
 if (fg.connectAPI.isDebug) {
-    fg.setConfig(config)
-    fg.addContent(cardData)
+    Promise.all([
+        import('./debugData.js'),
+        // import('./testdata.js'),
+        import('./blockPrototype.js'),
+        import('./toolbarData.js'),
+        import('./Runtype.js'),
+    ]).then(m => {
+        const cardData = m[0].cardData
+        const exports = globalThis.exports
+        const config = {
+            toolbar: exports.toolbarData,
+            blockPrototype: exports.blockPrototype,
+            Runtype: exports.Runtype,
+        }
+        fg.setConfig(config)
+        fg.addContent(cardData)
+    })
 } else {
     fg.setupConnect()
 }

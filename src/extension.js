@@ -5,6 +5,9 @@ const fs = require("fs");
 const { spawnSync } = require('child_process');
 
 const post = require('./post').postAsync;
+const { toolbarData } = require('../board/static/toolbarData.js');
+const { blockPrototype } = require('../board/static/blockPrototype.js');
+const { Runtype } = require('../board/static/Runtype.js');
 
 function getRandomString() {
   let text = '';
@@ -104,6 +107,8 @@ function activate(context) {
         }
       }
       config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }))
+      if (!config.toolbarData) config.toolbarData = toolbarData
+      if (!config.blockPrototype) config.blockPrototype = blockPrototype
 
       nodesPath = path.join(rootPath, fgobj.nodes)
       if (!fs.existsSync(nodesPath)) {

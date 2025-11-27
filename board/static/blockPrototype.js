@@ -1,4 +1,4 @@
-export const blockPrototype =
+const blockPrototype =
 {
     blocks: {
         NormalString: {
@@ -44,7 +44,7 @@ export const blockPrototype =
             typename: null,
             checkType: 'args',
             linkTo: [
-                { name: 'next', position: 'down', range: 'runfile'}
+                { name: 'next', position: 'down', range: 'runfile' }
             ],
             linkFrom: [
                 { name: 'previous', position: 'up', range: 'runfile' }
@@ -52,3 +52,7 @@ export const blockPrototype =
         }
     }
 }
+
+// export default blockPrototype
+if (typeof exports === 'undefined') { globalThis.exports = globalThis }
+exports.blockPrototype = blockPrototype;

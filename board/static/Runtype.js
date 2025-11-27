@@ -1,0 +1,28 @@
+const Runtype = {
+    "": {
+        type: 'vscode-jupyter',
+        filename: 'workspace.ipynb'
+    },
+    "np": {
+        type: 'node-post',
+        url: 'http://127.0.0.1:12082/exec',
+        payload: 'return ({code:content,filename:filename})',
+        show: 'if(ret.error)throw new Error(ret.error);return ret.output'
+    },
+    "vt": {
+        type: 'vscode-terminal',
+        message: 'cat __filename__'
+    },
+    "nt": {
+        type: 'node-terminal',
+        payload: 'return ["cat",filename]'
+    },
+    "c": {
+        type: 'concat',
+        filename: 'workspace.py'
+    },
+}
+
+// export default Runtype
+if (typeof exports === 'undefined') { globalThis.exports = globalThis }
+exports.Runtype = Runtype;

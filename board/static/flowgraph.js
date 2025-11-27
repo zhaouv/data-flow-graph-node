@@ -546,7 +546,7 @@ export const fg = {
     },
     setConfig(config) {
         Object.assign(fg.config, config)
-        fg.addToolbar(config.toolbar)
+        fg.addToolbar(config.toolbarData)
     },
     setupConnect() {
         fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'

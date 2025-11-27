@@ -141,3 +141,17 @@ body {
 .line {
     position: absolute;
 }
+
+.editmode .run {
+    display: none;
+}
+.runmode .edit {
+    display: none;
+}
+
+.editmode .field {
+    min-width: 10px;
+}
+.editmode .card:hover .field {
+    background: #aaa;
+}

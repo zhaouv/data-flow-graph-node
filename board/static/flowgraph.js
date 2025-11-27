@@ -154,12 +154,20 @@ export const fg = {
         let field = fg.config.blockPrototype.blocks[argv.type]
         let value = node[argv.name]
         let ele=document.createElement(field.type);
-        ele.className = 'field-'+field.type;
+        ele.className = 'field field-'+field.type;
         ele.setAttribute('title', argv.name)
         if (field.type=='snapshot') {
-            ele.innerText = 's';
+            let s1=document.createElement('span');
+            s1.className='edit'
+            s1.innerText = 's+';
+            ele.append(s1)
+            let s2=document.createElement('span');
+            s2.className='run'
+            s2.innerText = 's';
+            ele.append(s2)
             if (value==null) {
-                ele=''
+                s1.innerText = '-';
+                s2.innerText = '';
             }
         } else {
             ele.innerText = value||'';
@@ -168,7 +176,7 @@ export const fg = {
     },
     buildCard(node, block) {
         const card = document.createElement('div');
-        card.className = 'card';
+        card.className = 'card block';
         fg.setCardPos(card, node._pos)
         if (block == null) {
             const text = document.createElement('p');
@@ -176,7 +184,7 @@ export const fg = {
             card.appendChild(text);
             return
         }
-        card.className = 'card block-'+block.type;
+        card.className = 'card block block-'+block.type;
         card.setAttribute('block', block.type)
         let elements = [[]];
         let eline = elements[0]
@@ -495,8 +503,17 @@ export const fg = {
         return ret
     },
     toggleMode() {
+        let ce=document.body
         fg.mode.run *= -1
         fg.mode.edit *= -1
+        if (fg.mode.run>0) {
+            ce.classList.remove('editmode')
+            ce.classList.add('runmode')
+        }
+        if (fg.mode.edit>0) {
+            ce.classList.add('editmode')
+            ce.classList.remove('runmode')
+        }
     },
     clickCard(index, card, target, event) {
         // check if send to double click

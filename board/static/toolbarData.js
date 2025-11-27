@@ -2,7 +2,7 @@ const toolbarData = [
     [
         { text: 'edit', class: '', click: 'fg.toggleButton(btn);fg.toggleButton(btn.parentNode.parentNode.children[1-tindex].children[index]);fg.toggleMode();' },
 
-        { text: '+', class: 'edit', click: 'fg.scale(1.1)', title: '视图放大' },
+        { text: '+', class: '', click: 'fg.scale(1.1)', title: '视图放大' },
 
         { text: 'r', class: 'edit', click: 'fg.scale()', title: '恢复初始视图大小' },
         { text: '^', class: 'edit', click: 'fg.move("up")' },
@@ -31,7 +31,7 @@ const toolbarData = [
     [
         { text: 'run ', class: 'primary', click: 'fg.toggleButton(btn);fg.toggleButton(btn.parentNode.parentNode.children[1-tindex].children[index]);fg.toggleMode();' },
 
-        { text: '-', class: 'edit', click: 'fg.scale(1/1.1)', title: '视图缩小' },
+        { text: '-', class: '', click: 'fg.scale(1/1.1)', title: '视图缩小' },
 
         { text: '<', class: 'edit', click: 'fg.move("left")' },
         { text: 'v', class: 'edit', click: 'fg.move("down")' },

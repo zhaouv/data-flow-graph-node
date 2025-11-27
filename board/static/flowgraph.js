@@ -181,7 +181,7 @@ export const fg = {
         let elements = [[]];
         let eline = elements[0]
         let message = block.message;
-        for (let ma; ma = /%\d+|\n|%%|%r/.exec(message);) {
+        for (let ma; ma = /%\d+ |\n|%%|%r/.exec(message);) {
             if (ma.index != 0) eline.push(message.slice(0, ma.index));
             if (ma[0] == '\n') {
                 eline = []
@@ -197,7 +197,7 @@ export const fg = {
             for (let ei of eline) {
                 if (ei == '%%') {
                     lineEle.append('%')
-                } else if (/^%\d+$/.exec(ei)) {
+                } else if (/^%\d+ $/.exec(ei)) {
                     lineEle.append(fg.buildField(-1 + ~~ei.slice(1), node, block))
                 } else if (ei == '%r') {
                     card.append(lineEle)

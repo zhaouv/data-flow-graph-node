@@ -33,7 +33,7 @@ const blockPrototype =
         },
         runfile: {
             type: 'runfile',
-            message: '%1\n%2\n%3%r%4',
+            message: '%1 \n%2 \n%3 %r%4 ',
             args: [
                 { name: 'text', type: 'MultiString', value: 'comment' },
                 { name: 'filename', type: 'Runfile', value: 'a.py' },

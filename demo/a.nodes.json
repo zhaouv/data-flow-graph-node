@@ -3,7 +3,7 @@
     {
         "text": "a",
         "filename": "a.py",
-        "snapshot": true,
+        "snapshot": "s",
         "_pos": {
             "left": 0,
             "top": 0,
@@ -19,7 +19,7 @@
     {
         "text": "b",
         "filename": "b.py",
-        "snapshot": true,
+        "snapshot": "s",
         "_pos": {
             "left": 200,
             "top": 0,
@@ -50,7 +50,7 @@
     {
         "text": "d",
         "filename": "d.py",
-        "snapshot": true,
+        "snapshot": "s",
         "_pos": {
             "left": 0,
             "top": 100,

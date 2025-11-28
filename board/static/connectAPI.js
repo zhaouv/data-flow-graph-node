@@ -6,6 +6,10 @@ export const connectAPI = {
   info(x) {
     console.log(x)
   },
+  prompt(show,text,cb){
+    let data=prompt(show,text)
+    cb(data)
+  },
   recieve:{
     currentLine:'connectAPI.setContent(message.content)',
     custom:'connectAPI.custom(message.content)',
@@ -114,6 +118,14 @@ globalThis.addEventListener('message', event => {
         command: 'showInfo',
       })
     }
+    connectAPI.prompt = (show,text,cb)=>{
+      connectAPI._prompt_cb=cb
+      vscode.postMessage({
+        show,text,
+        command: 'prompt',
+      })
+    }
+    connectAPI.recieve.prompt='connectAPI._prompt_cb(message.content);'
     // vscode.postMessage({ command: 'requestCustom' })
     connectAPI.isDebug=false
   } else {

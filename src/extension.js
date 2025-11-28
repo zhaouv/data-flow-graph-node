@@ -193,6 +193,16 @@ function activate(context) {
             currentPanel.webview.postMessage({ command: 'record', content: record.current });
             fs.writeFileSync(recordPath, JSON.stringify(record, null, 4), { encoding: 'utf8' });
             return;
+          case 'prompt':
+            vscode.window.showInputBox({
+              prompt: message.show, 
+              // ignoreFocusOut: true, // 设为true可防止点击编辑器其他区域时输入框关闭
+              value: message.text, // 可设置默认值
+              // valueSelection: [0, 6] // 可预设选中部分默认文本，例如选中"default"
+            }).then(userInput=>{
+              currentPanel.webview.postMessage({ command: 'prompt', content: userInput });
+            });
+            return;
           // case 'saveState':
           //   webviewState = message.state;
           //   return;
@@ -241,12 +251,10 @@ function activate(context) {
       } else {
         ctx.output = text
         display.push(ctx.doneTick + ': ' + text)
-        if (ctx.snapshot != null) {
-          if (ctx.snapshot in record.current && record.current[ctx.snapshot].snapshot) {
-            ctx.snapshot = record.current[ctx.snapshot].snapshot
-          } else {
-            ctx.snapshot = 100000 + ~~(Math.random() * 100000000)
-          }
+        if (ctx.snapshot in record.current && record.current[ctx.snapshot].snapshot) {
+          ctx.snapshot = record.current[ctx.snapshot].snapshot
+        } else {
+          ctx.snapshot = 100000 + ~~(Math.random() * 100000000)
         }
       }
       currentPanel.webview.postMessage({ command: 'result', content: ctx });

@@ -153,29 +153,14 @@ export const fg = {
         let argv = block.args[argi]
         let field = fg.config.blockPrototype.blocks[argv.type]
         let value = node[argv.name]
-        let ele=document.createElement(field.type);
-        ele.className = 'field field-'+field.type;
+        let ele = document.createElement(field.type);
+        ele.className = 'field field-' + field.type;
         ele.setAttribute('title', argv.name)
-        if (field.type=='snapshot') {
-            let s1=document.createElement('span');
-            s1.className='edit'
-            s1.innerText = 's+';
-            ele.append(s1)
-            let s2=document.createElement('span');
-            s2.className='run'
-            s2.innerText = 's';
-            ele.append(s2)
-            if (value==null) {
-                s1.innerText = '-';
-                s2.innerText = '';
-            }
-        } else {
-            ele.innerText = value||'';
-        }
+        ele.innerText = value || '';
         return ele
     },
-    buildCard(node, block) {
-        const card = document.createElement('div');
+    buildCard(card, node, block) {
+        card.innerHTML = ''
         card.className = 'card block';
         fg.setCardPos(card, node._pos)
         if (block == null) {
@@ -184,7 +169,7 @@ export const fg = {
             card.appendChild(text);
             return
         }
-        card.className = 'card block block-'+block.type;
+        card.className = 'card block block-' + block.type;
         card.setAttribute('block', block.type)
         let elements = [[]];
         let eline = elements[0]
@@ -202,6 +187,7 @@ export const fg = {
         let lastbr;
         for (const eline of elements) {
             let lineEle = document.createElement('span');
+            lineEle.className = 'fleft'
             for (let ei of eline) {
                 if (ei == '%%') {
                     lineEle.append('%')
@@ -210,7 +196,7 @@ export const fg = {
                 } else if (ei == '%r') {
                     card.append(lineEle)
                     lineEle = document.createElement('span');
-                    lineEle.style.float = 'right'
+                    lineEle.className = 'fright'
                 } else {
                     lineEle.append(ei)
                 }
@@ -221,12 +207,13 @@ export const fg = {
             card.append(lastbr)
         }
         lastbr.remove()
-        return card
+        return
     },
     addContent(nodes) {
         nodes.forEach((node, index) => {
             let block = fg.guessType(node)
-            const card = fg.buildCard(node, block)
+            const card = document.createElement('div');
+            fg.buildCard(card, node, block)
             contentElement.appendChild(card);
         });
         fg.nodes.push(...nodes)
@@ -503,14 +490,15 @@ export const fg = {
         return ret
     },
     toggleMode() {
-        let ce=document.body
+        let ce = document.body
         fg.mode.run *= -1
         fg.mode.edit *= -1
-        if (fg.mode.run>0) {
+        if (fg.mode.run > 0) {
             ce.classList.remove('editmode')
             ce.classList.add('runmode')
+            fg.setRecord(fg.record)
         }
-        if (fg.mode.edit>0) {
+        if (fg.mode.edit > 0) {
             ce.classList.add('editmode')
             ce.classList.remove('runmode')
         }
@@ -519,6 +507,18 @@ export const fg = {
         // check if send to double click
         let node = fg.nodes[index]
         if (fg.mode.edit > 0) {
+            while (!target.classList.contains('field') && target != document.body) {
+                target = target.parentNode
+            }
+            if (target.classList.contains('field')) {
+                let argvname = target.getAttribute('title')
+                let block = fg.config.blockPrototype.blocks[card.getAttribute('block')]
+                connectAPI.prompt(argvname, node[argvname] || '', (data) => {
+                    if (data == null) return
+                    node[argvname] = data
+                    fg.buildCard(card, node, block)
+                })
+            }
             return
         }
         if (fg.mode.run > 0 && fg.mode.file > 0) {
@@ -571,7 +571,8 @@ export const fg = {
     runNodeChain(index) {
         let nodes = fg.findNodeBackward(index, (v) => {
             let index = fg.nodes.indexOf(v)
-            return !(fg.record[index] && fg.record[index].snapshot)
+            // 未设置快照 或 快照不存在
+            return !v.snapshot || !(fg.record[index] && fg.record[index].snapshot)
         })
         fg.runNodes(nodes.map(v => fg.nodes.indexOf(v)))
     },

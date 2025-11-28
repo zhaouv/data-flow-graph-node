@@ -7,7 +7,7 @@ const blockPrototype =
         },
         Snapshot: {
             type: "snapshot",
-            value: null
+            value: ""
         },
         MultiString: {
             type: "multi_string",
@@ -38,7 +38,7 @@ const blockPrototype =
                 { name: 'text', type: 'MultiString', value: 'comment' },
                 { name: 'filename', type: 'Runfile', value: 'a.py' },
                 { name: 'runtype', type: 'Runtype', value: '', omitted: true },
-                { name: 'snapshot', type: 'Snapshot', value: null, omitted: true },
+                { name: 'snapshot', type: 'Snapshot', value: '', omitted: true },
             ],
             typename: null,
             checkType: 'args',

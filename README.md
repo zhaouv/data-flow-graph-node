@@ -1,5 +1,7 @@
 # data-flow-graph-node
 
+数据流图节点工具
+
 用于数据处理和流程管理, 以vscode插件的形式提供, 以便于兼顾文本编辑以及通过web操作的流程图界面
 
 ## 界面
@@ -58,11 +60,11 @@ runtype 添加jupyter有关的支持
 
 通过proto来渲染方块
 
-> +conditionfile
+多选的移动
 
-> findNode xx ward 函数添加上线的信息
-
-> 线条渲染, 更多种类的线
+> conditionfile, 要改runfiles机制, 以及其反馈机制结合重置快照链完成
+> + findNode xx ward 函数添加上线的信息
+> + 线条渲染, 更多种类的线
 
 > 快捷键绑定
 

@@ -34,6 +34,7 @@ let elementScale = 1;
 const lineElement = document.querySelector('.line');
 const contentElement = document.querySelector('.content');
 const contentScaleElement = document.querySelector('.content-scale');
+const selectionBox = document.querySelector('.selectionBox');
 
 contentElement.addEventListener('click', function (e) {
     // console.log(e)
@@ -62,6 +63,61 @@ contentElement.addEventListener('click', function (e) {
     }
 });
 
+const multiSelect = {
+    isSelecting: false,
+}
+contentScaleElement.addEventListener('mousedown', function (e) {
+    if (fg.mode.edit < 0) return
+    if (fg.moveSetting.multiSelect < 0) return
+    multiSelect.isSelecting = true;
+    const rect = contentScaleElement.getBoundingClientRect();
+    multiSelect.startX = e.clientX - rect.left;
+    multiSelect.startY = e.clientY - rect.top;
+    multiSelect.startX /= elementScale
+    multiSelect.startY /= elementScale
+    selectionBox.style.left = multiSelect.startX + 'px';
+    selectionBox.style.top = multiSelect.startY + 'px';
+    selectionBox.style.width = '0px';
+    selectionBox.style.height = '0px';
+    selectionBox.style.display = 'block';
+});
+contentScaleElement.addEventListener('mousemove', function (e) {
+    if (fg.mode.edit < 0) return
+    if (fg.moveSetting.multiSelect < 0) return
+    if (!multiSelect.isSelecting) return;
+    const rect = contentScaleElement.getBoundingClientRect();
+    multiSelect.endX = e.clientX - rect.left;
+    multiSelect.endY = e.clientY - rect.top;
+    multiSelect.endX /= elementScale
+    multiSelect.endY /= elementScale
+    multiSelect.left = Math.min(multiSelect.startX, multiSelect.endX);
+    multiSelect.top = Math.min(multiSelect.startY, multiSelect.endY);
+    multiSelect.width = Math.abs(multiSelect.endX - multiSelect.startX);
+    multiSelect.height = Math.abs(multiSelect.endY - multiSelect.startY);
+    selectionBox.style.left = multiSelect.left + 'px';
+    selectionBox.style.top = multiSelect.top + 'px';
+    selectionBox.style.width = multiSelect.width + 'px';
+    selectionBox.style.height = multiSelect.height + 'px';
+});
+
+// 鼠标释放事件
+contentScaleElement.addEventListener('mouseup', function () {
+    if (fg.mode.edit < 0) return
+    if (fg.moveSetting.multiSelect < 0) return
+    if (!multiSelect.isSelecting) return;
+    multiSelect.isSelecting = false;
+    if (typeof multiSelect.endX === 'undefined' || typeof multiSelect.endY === 'undefined') {
+        multiSelect.endX = multiSelect.startX;
+        multiSelect.endY = multiSelect.startY;
+    }
+    multiSelect.left = Math.min(multiSelect.startX, multiSelect.endX);
+    multiSelect.top = Math.min(multiSelect.startY, multiSelect.endY);
+    multiSelect.width = Math.abs(multiSelect.endX - multiSelect.startX);
+    multiSelect.height = Math.abs(multiSelect.endY - multiSelect.startY);
+    selectionBox.style.display = 'none';
+    fg.setMultiSelect(multiSelect)
+});
+
 const LEFTMARGIN = 200;
 export const fg = {
     tools: [[], []],
@@ -69,7 +125,7 @@ export const fg = {
     link: [],
     currentCard: { index: -1, card: null, node: null, tick: 0 },
     lastCard: { index: -1, card: null, node: null, tick: 0 },
-    moveSetting: { down: 1 },
+    moveSetting: { down: -1, multiSelect: 1, multiSelectNodes: [] },
     mode: { edit: -1, run: 1, file: 1 },
     // state: {},
     record: [],
@@ -228,7 +284,7 @@ export const fg = {
     firstAddContent() {
         if (globalThis.__firstAddContent_has_run) return
         globalThis.__firstAddContent_has_run = 1
-        document.querySelector(".content-container").scrollLeft = 200
+        document.querySelector(".content-container").scrollLeft = LEFTMARGIN
     },
     setAsCurrentCard(index) {
         Object.assign(fg.lastCard, fg.currentCard)
@@ -259,7 +315,15 @@ export const fg = {
             }
         }
         let node = fg.currentCard.node
-        if (fg.moveSetting.down < 0) {
+
+        if (fg.moveSetting.multiSelect > 0) {
+            let nodes = fg.moveSetting.multiSelectNodes
+            nodes.forEach(v => {
+                moveNode(v)
+                fg.setCardPos(contentElement.children[fg.nodes.indexOf(v)], v._pos)
+            })
+            fg.buildLines() // 理论上只应该重连涉及的图块的线,有需求再优化
+        } else if (fg.moveSetting.down < 0) {
             moveNode(node)
             fg.resetCurrentCardPos()
         } else {
@@ -535,7 +599,7 @@ export const fg = {
     // updateFromState(state){
     //     // update from fg.state
     //     fg.state=state
-    //     document.querySelector(".content-container").scrollLeft = 200
+    //     document.querySelector(".content-container").scrollLeft = LEFTMARGIN
     // },
     // requestState(){
     //     connectAPI.send({ command: 'requestState' })
@@ -628,6 +692,22 @@ export const fg = {
             }
         })
         fg.connectAPI.send({ command: 'clearSnapshot', indexes: indexes })
+    },
+    setMultiSelect(multiSelect) {
+        fg.moveSetting.multiSelectNodes = fg.nodes.filter((v, i) => {
+            if (v._pos.left + 50 < multiSelect.left - LEFTMARGIN) return false
+            if (v._pos.left + v._pos.width - 50 > multiSelect.left + multiSelect.width - LEFTMARGIN) return false
+            if (v._pos.top + 50 < multiSelect.top) return false
+            if (v._pos.top + v._pos.height - 50 > multiSelect.top + multiSelect.height) return false
+
+            let target = contentElement.children[i]
+            target.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                target.style.transform = '';
+            }, 150);
+
+            return true
+        })
     },
     print(obj) {
         let print = fg.connectAPI.isDebug ? console.log : connectAPI.showText

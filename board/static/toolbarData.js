@@ -5,8 +5,9 @@ const toolbarData = [
         { text: '+', class: '', click: 'fg.scale(1.1)', title: '视图放大' },
 
         { text: 'r', class: '', click: 'fg.scale()', title: '恢复初始视图大小' },
+        { text: 'm', class: 'edit primary', click: 'fg.toggleButton(btn);fg.moveSetting.multiSelect*=-1', title: '移动框选的方块, 此设置优先级高于移动连接' },
         { text: '^', class: 'edit', click: 'fg.move("up")' },
-        { text: 'd', class: 'edit primary', click: 'fg.toggleButton(btn);fg.moveSetting.down*=-1', title: '同时移动右下方的连接' },
+        { text: 'd', class: 'edit', click: 'fg.toggleButton(btn);fg.moveSetting.down*=-1', title: '同时移动右下方的连接' },
 
         { text: '>+', class: 'edit', click: 'fg.currentCard.node._pos.width+=100;fg.resetCurrentCardPos()' },
         { text: 'v+', class: 'edit', click: 'fg.currentCard.node._pos.height+=100;fg.resetCurrentCardPos()' },
@@ -23,6 +24,8 @@ const toolbarData = [
 
 
 
+        { text: '?切换方块类型', class: 'edit', click: '' },
+
         { text: '测试1-打印nodes', class: 'edit', click: 'fg.print(fg.nodes)' },
 
         { text: '?以点击为起点深度优先自动排布', class: 'edit', click: 'fg.connectAPI.info("尚未实现")' },
@@ -32,6 +35,7 @@ const toolbarData = [
         { text: 'run ', class: 'primary', click: 'fg.toggleButton(btn);fg.toggleButton(btn.parentNode.parentNode.children[1-tindex].children[index]);fg.toggleMode();' },
 
         { text: '-', class: '', click: 'fg.scale(1/1.1)', title: '视图缩小' },
+        { text: 's', class: 'edit', click: '', title: '占位置,暂时没用,之后做成保存按钮' },
 
         { text: '<', class: 'edit', click: 'fg.move("left")' },
         { text: 'v', class: 'edit', click: 'fg.move("down")' },

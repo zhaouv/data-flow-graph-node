@@ -53,7 +53,7 @@ const blockPrototype =
             typename: null,
             checkType: 'args',
             linkTo: [
-                { name: 'next', direct: 'down', range: 'run' }
+                { name: 'next', direct: 'down', range: 'run', target: 'previous' }
             ],
             linkFrom: [
                 { name: 'previous', direct: 'up', range: 'run' }
@@ -73,8 +73,8 @@ const blockPrototype =
             typename: null,
             checkType: 'args',
             linkTo: [
-                { name: 'next', direct: 'down', range: 'run' },
-                { name: 'drop', direct: 'right', range: 'run', nodepend: true }
+                { name: 'next', direct: 'down', range: 'run', target: 'previous' },
+                { name: 'drop', direct: 'right', range: 'run', target: 'previous', nodepend: true }
             ],
             linkFrom: [
                 { name: 'previous', direct: 'up', range: 'run' }

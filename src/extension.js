@@ -313,9 +313,10 @@ function activate(context) {
         if (rconfig.type === 'vscode-jupyter') {
           let targetPath = path.join(rootPath, rconfig.filename)
           const result = await runJupyter(targetPath, rid, content)
-          setDoneTick(ctx, result.output)
           if (result.error) {
             throw new Error(result.error);
+          } else {
+            setDoneTick(ctx, result.output)
           }
           continue
         }

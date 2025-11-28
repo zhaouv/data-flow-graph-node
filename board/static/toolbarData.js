@@ -4,7 +4,7 @@ const toolbarData = [
 
         { text: '+', class: '', click: 'fg.scale(1.1)', title: '视图放大' },
 
-        { text: 'r', class: 'edit', click: 'fg.scale()', title: '恢复初始视图大小' },
+        { text: 'r', class: '', click: 'fg.scale()', title: '恢复初始视图大小' },
         { text: '^', class: 'edit', click: 'fg.move("up")' },
         { text: 'd', class: 'edit primary', click: 'fg.toggleButton(btn);fg.moveSetting.down*=-1', title: '同时移动右下方的连接' },
 
@@ -17,7 +17,7 @@ const toolbarData = [
 
         { text: '?启用', class: 'run', click: 'fg.connectAPI.info("尚未实现")' },
 
-        { text: '文件', class: 'run primary', click: 'fg.toggleButton(btn);fg.mode.file*=-1', title: '点击卡片时是否显示文件'},
+        
 
         { text: '重置快照链', class: 'run', click: 'fg.clearSnapshotChain(fg.currentCard.index)' },
 
@@ -43,6 +43,8 @@ const toolbarData = [
         { text: '断开', class: 'edit', click: 'fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"next","previous")' },
 
         { text: '删除', class: 'edit', click: 'fg.removeNode(fg.currentCard.index)' },
+
+        { text: 'f', class: 'run primary', click: 'fg.toggleButton(btn);fg.mode.file*=-1', title: '点击卡片时是否显示文件'},
 
         { text: '?禁用', class: 'run', click: 'fg.connectAPI.info("尚未实现")' },
         { text: '运行链', class: 'run', click: 'fg.runNodeChain(fg.currentCard.index)' },

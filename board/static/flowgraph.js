@@ -133,6 +133,9 @@ export const fg = {
         if (range == null) {
             range = Object.keys(fg.config.blockPrototype.blocks).filter(v => /[a-z]/.exec(v.slice(0, 1)))
         }
+        if (range in fg.config.blockPrototype.collection) {
+            range = fg.config.blockPrototype.collection[range]
+        }
         let args = Object.keys(node).filter(v => Object.keys(fg.savedKey).indexOf(v) == -1)
         for (const type of range) {
             let block = fg.config.blockPrototype.blocks[type]

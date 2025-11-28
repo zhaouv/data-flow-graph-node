@@ -56,7 +56,15 @@ await依次执行, 每执行完一个showText加上ext:result
 
 runtype 添加jupyter有关的支持
 
-> 通过proto来渲染方块
+通过proto来渲染方块
+
+> +conditionfile
+
+> findNode xx ward 函数添加上线的信息
+
+> 线条渲染, 更多种类的线
+
+> 快捷键绑定
 
 > removenode后send一个remove, ext移除记录, 再把record发回来. 这里主要是注册事件的机制
 

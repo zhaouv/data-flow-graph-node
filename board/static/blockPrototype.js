@@ -1,6 +1,16 @@
 const blockPrototype =
 {
+    collection: {
+        'run': [
+            'runfile',
+            'conditionfile',
+        ]
+    },
     blocks: {
+        Int: {
+            type: "number",
+            value: 0
+        },
         NormalString: {
             type: "string",
             value: "NormalString_default"
@@ -43,10 +53,31 @@ const blockPrototype =
             typename: null,
             checkType: 'args',
             linkTo: [
-                { name: 'next', position: 'down', range: 'runfile' }
+                { name: 'next', direct: 'down', range: 'run' }
             ],
             linkFrom: [
-                { name: 'previous', position: 'up', range: 'runfile' }
+                { name: 'previous', direct: 'up', range: 'run' }
+            ],
+        },
+        conditionfile: {
+            type: 'conditionfile',
+            message: '%1 \n%2 \n%5 %r%6 %t2 \n%3 %r%4 ',
+            args: [
+                { name: 'text', type: 'MultiString', value: 'comment' },
+                { name: 'filename', type: 'Runfile', value: 'a.py' },
+                { name: 'runtype', type: 'Runtype', value: '', omitted: true },
+                { name: 'snapshot', type: 'Snapshot', value: '', omitted: true },
+                { name: 'condition', type: 'NormalString', value: 'c.txt' },
+                { name: 'maxCount', type: 'Int', value: 10, description: '0 for no limit', omitted: true },
+            ],
+            typename: null,
+            checkType: 'args',
+            linkTo: [
+                { name: 'next', direct: 'down', range: 'run' },
+                { name: 'drop', direct: 'right', range: 'run', nodepend: true }
+            ],
+            linkFrom: [
+                { name: 'previous', direct: 'up', range: 'run' }
             ],
         }
     }

@@ -13,6 +13,7 @@ const keymap = {
     '0': '0',
     '-': '-',
     '=': '=',
+    'c': 'duplicate',
     'ctrl+s': 'save',
 };
 

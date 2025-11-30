@@ -8,6 +8,7 @@ if (fg.connectAPI.isDebug) {
         import('./blockPrototype.js'),
         import('./toolbarData.js'),
         import('./Runtype.js'),
+        import('./keymap.js'),
     ]).then(m => {
         const cardData = m[0].cardData
         const exports = globalThis.exports
@@ -15,6 +16,7 @@ if (fg.connectAPI.isDebug) {
             toolbarData: exports.toolbarData,
             blockPrototype: exports.blockPrototype,
             Runtype: exports.Runtype,
+            keymap: exports.keymap,
         }
         fg.setConfig(config)
         fg.addContent(cardData)

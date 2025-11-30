@@ -29,6 +29,24 @@ toolbar.addEventListener('click', function (e) {
         func(fg, target, tindex, index)
     }
 });
+document.onkeydown = (e) => {
+    let evtobj = window.event ? event : e
+    let key = evtobj.key
+    if (evtobj.ctrlKey) {
+        key = 'ctrl+' + key
+    }
+    let id = fg.config.keymap[key]
+    if (id) {
+        [0, 1].forEach(tindex => {
+            fg.tools[tindex].forEach((bi, index) => {
+                if (bi.id == id) {
+                    let func = new Function('fg', 'btn', 'tindex', 'index', bi.click)
+                    func(fg, toolbar.children[tindex].children[index], tindex, index)
+                }
+            })
+        });
+    }
+};
 
 let elementScale = 1;
 const lineElement = document.querySelector('.line-container');
@@ -62,7 +80,7 @@ contentElement.addEventListener('click', function (e) {
         fg.setAsCurrentCard(index)
 
         if (1) {
-            document.querySelectorAll(`.linesi-${index} path`).forEach(v=>{
+            document.querySelectorAll(`.linesi-${index} path`).forEach(v => {
                 v.style.strokeWidth = '5px';
                 setTimeout(() => {
                     v.style.strokeWidth = '';
@@ -151,7 +169,8 @@ export const fg = {
                 type: 'terminal',
                 message: 'echo __filename__'
             },
-        }
+        },
+        keymap: {},
     },
     getRandomString() {
         let text = '';
@@ -167,8 +186,16 @@ export const fg = {
                 const btn = document.createElement('button');
                 btn.innerHTML = bi.text.replaceAll(' ', '&nbsp;')
                 btn.className = 'toolbar-btn' + (bi.class ? ' ' + bi.class : '')
+                let title = ''
+                if (bi.id) {
+                    title = ' | ' + bi.id
+                    for (let k in fg.config.keymap) {
+                        if (fg.config.keymap[k] == bi.id) title = title + ', ' + k
+                    }
+                }
                 // btn.setAttribute('index', index+fg.tools[ii].length)
-                if (bi.title) btn.setAttribute('title', bi.title)
+                if (bi.title) title = bi.title + title
+                if (title) btn.setAttribute('title', title)
                 toolbar.children[ii].appendChild(btn);
             })
             fg.tools[ii].push(...tools[ii])
@@ -662,11 +689,11 @@ export const fg = {
         let card = contentElement.children[index]
         let block = fg.config.blockPrototype.blocks[card.getAttribute('block')]
         let rblock = block
-        if (block.type=='runfile') {
+        if (block.type == 'runfile') {
             rblock = fg.config.blockPrototype.blocks['conditionfile']
-            node.condition=rblock.args.filter(v=>v.name=='condition')[0].value
+            node.condition = rblock.args.filter(v => v.name == 'condition')[0].value
             fg.buildCard(card, node, rblock)
-        } else if (block.type=='conditionfile'){
+        } else if (block.type == 'conditionfile') {
             rblock = fg.config.blockPrototype.blocks['runfile']
             delete node.condition
             delete node.maxCount
@@ -674,7 +701,7 @@ export const fg = {
             fg.buildCard(card, node, rblock)
             fg.buildLines()
         }
-        
+
     },
     // saveState(){
     //     connectAPI.send({ command: 'saveState', state: fg.state })

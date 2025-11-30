@@ -8,6 +8,7 @@ const post = require('./post').postAsync;
 const { toolbarData } = require('../board/static/toolbarData.js');
 const { blockPrototype } = require('../board/static/blockPrototype.js');
 const { Runtype } = require('../board/static/Runtype.js');
+const { keymap } = require('../board/static/keymap.js');
 
 function getRandomString() {
   let text = '';
@@ -109,6 +110,7 @@ function activate(context) {
       config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }))
       if (!config.toolbarData) config.toolbarData = toolbarData
       if (!config.blockPrototype) config.blockPrototype = blockPrototype
+      if (!config.keymap) config.keymap = keymap
 
       nodesPath = path.join(rootPath, fgobj.nodes)
       if (!fs.existsSync(nodesPath)) {
@@ -183,7 +185,7 @@ function activate(context) {
             currentPanel.webview.postMessage({ command: 'nodes', content: nodes });
             return;
           case 'saveNodes':
-            nodes=message.nodes
+            nodes = message.nodes
             fs.writeFileSync(nodesPath, JSON.stringify(nodes, null, 4), { encoding: 'utf8' });
             return;
           case 'requestRecord':
@@ -199,11 +201,11 @@ function activate(context) {
             return;
           case 'prompt':
             vscode.window.showInputBox({
-              prompt: message.show, 
+              prompt: message.show,
               // ignoreFocusOut: true, // 设为true可防止点击编辑器其他区域时输入框关闭
               value: message.text, // 可设置默认值
               // valueSelection: [0, 6] // 可预设选中部分默认文本，例如选中"default"
-            }).then(userInput=>{
+            }).then(userInput => {
               currentPanel.webview.postMessage({ command: 'prompt', content: userInput });
             });
             return;

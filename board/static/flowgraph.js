@@ -66,7 +66,7 @@ contentElement.addEventListener('click', function (e) {
                 v.style.strokeWidth = '5px';
                 setTimeout(() => {
                     v.style.strokeWidth = '';
-                }, 150);
+                }, 300);
             })
         }
 

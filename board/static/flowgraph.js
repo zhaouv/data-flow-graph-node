@@ -469,6 +469,8 @@ export const fg = {
         fg.reDrawLine(lsindex, leindex)
     },
     buildLines() {
+        let sl = contentContainerElement.scrollLeft
+        let st = contentContainerElement.scrollTop
         fg.cleanLines()
         fg.link = fg.nodes.map(v => fg.nodes.map(vv => []))
         fg.nodes.forEach((v, lsindex) => {
@@ -482,6 +484,8 @@ export const fg = {
                 }
             }
         })
+        contentContainerElement.scrollLeft = sl
+        contentContainerElement.scrollTop = st
     },
     uiAddLine(lsindex, leindex, lsname, lename) {
         // console.log(lsindex, leindex, lsname, lename)
@@ -661,14 +665,16 @@ export const fg = {
         if (block.type=='runfile') {
             rblock = fg.config.blockPrototype.blocks['conditionfile']
             node.condition=rblock.args.filter(v=>v.name=='condition')[0].value
-
+            fg.buildCard(card, node, rblock)
         } else if (block.type=='conditionfile'){
             rblock = fg.config.blockPrototype.blocks['runfile']
             delete node.condition
             delete node.maxCount
             delete node?._linkTo?.drop
+            fg.buildCard(card, node, rblock)
+            fg.buildLines()
         }
-        fg.buildCard(card, node, rblock)
+        
     },
     // saveState(){
     //     connectAPI.send({ command: 'saveState', state: fg.state })

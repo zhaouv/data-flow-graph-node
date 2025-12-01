@@ -852,7 +852,7 @@ export const fg = {
                 indexes = fg.moveSetting.multiSelectNodes.map(v => fg.nodes.indexOf(v))
             }
             const { ring, levels } = levelTopologicalSort(fg.nodes, indexes)
-            console.log(levels, ring, indexes)
+            // console.log(levels, ring, indexes)
             if (ring) {
                 fg.connectAPI.info('当前节点图包含环无法自动排布')
                 return

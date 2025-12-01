@@ -865,7 +865,7 @@ export const fg = {
             for (const level of levels) {
                 let maxHeight = 0
                 let left = fg.nodes[levels[0][0]]._pos.left
-                level.sort((a, b) => fg.nodes[a]._pos.left + 0.00001 * a < fg.nodes[b]._pos.left + 0.00001 * b)
+                level.sort((a, b) => fg.nodes[a]._pos.left + 0.00001 * a - fg.nodes[b]._pos.left + 0.00001 * b)
                 for (const index of level) {
                     let node = fg.nodes[index]
                     node._pos.left = left

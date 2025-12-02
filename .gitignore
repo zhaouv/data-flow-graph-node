@@ -144,3 +144,4 @@ board/static/testdata.js
 *.record.json
 demo/test.*.json
 publish.md
+*.vsix

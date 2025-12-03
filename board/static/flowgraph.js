@@ -493,7 +493,7 @@ export const fg = {
             s: fg.nodes[lsindex]._pos,
             sb: fg.guessType(fg.nodes[lsindex]),
             e: fg.nodes[leindex]._pos,
-            eb: fg.guessType(fg.nodes[lsindex]),
+            eb: fg.guessType(fg.nodes[leindex]),
             element: null,
             lsname,
             lename,
@@ -531,15 +531,36 @@ export const fg = {
         fg.nodes[lsindex]._linkTo[lsname] = Object.assign({}, fg.nodes[lsindex]._linkTo[lsname], { [leindex - lsindex]: lename })
         fg.addLine(lsindex, leindex, lsname, lename)
     },
+    uiTryAddLine(lsindex, leindex) {
+        // 尝试连接next之外的线
+        let sb = fg.guessType(fg.nodes[lsindex])
+        let eb = fg.guessType(fg.nodes[leindex])
+        sb.linkTo.forEach(v => {
+            if (v.name == 'next') return
+            eb.linkFrom.filter(j => j.name == v.target).forEach(j => {
+                fg.uiAddLine(lsindex, leindex, v.name, j.name)
+            })
+        })
+    },
     uiRemoveLine(lsindex, leindex, lsname, lename) {
         // console.log(lsindex, leindex, lsname, lename)
         for (const ll of fg.link[lsindex][leindex]) {
             if (lsname == ll.lsname && lename == ll.lename) {
                 ll.element.remove()
                 fg.link[lsindex][leindex].splice(fg.link[lsindex][leindex].indexOf(ll), 1);
-                delete fg.nodes[lsindex]._linkTo[lsname]
+                delete fg.nodes[lsindex]._linkTo[lsname][leindex - lsindex]
+                if (Object.keys(fg.nodes[lsindex]._linkTo[lsname]).length == 0) delete fg.nodes[lsindex]._linkTo[lsname]
                 return
             }
+        }
+    },
+    uiRemoveAllLine(lsindex, leindex) {
+        for (let ll; ll = fg.link[lsindex][leindex].pop();) {
+            let lsname = ll.lsname
+            let lename = ll.lename
+            ll.element.remove()
+            delete fg.nodes[lsindex]._linkTo[lsname][leindex - lsindex]
+            if (Object.keys(fg.nodes[lsindex]._linkTo[lsname]).length == 0) delete fg.nodes[lsindex]._linkTo[lsname]
         }
     },
     removeNode(index) {
@@ -703,6 +724,22 @@ export const fg = {
             delete node?._linkTo?.drop
             fg.buildCard(card, node, rblock)
             fg.buildLines()
+        } else {
+            let range = block.linkFrom.filter(v => v.name == 'previous')[0].range
+            if (range in fg.config.blockPrototype.collection) {
+                range = fg.config.blockPrototype.collection[range]
+            }
+            if (block.checkType == 'type' && range.includes(block.type)) {
+                let newtype = range[(range.indexOf(block.type) + 1) % range.length]
+                rblock = fg.config.blockPrototype.blocks[newtype]
+                node[rblock.typename] = newtype
+                if (node._linkTo) {
+                    for (let k in node._linkTo) {
+                        if (rblock.linkTo.filter(v => v.name == k).length == 0) delete node._linkTo[k]
+                    }
+                }
+                fg.buildCard(card, node, rblock)
+            }
         }
 
     },
@@ -858,6 +895,14 @@ export const fg = {
     setConfig(config) {
         Object.assign(fg.config, config)
         fg.addToolbar(config.toolbarData)
+        if (config.custom) {
+            config.custom.operate.forEach(operate => {
+                if (operate.type === 'script') {
+                    let func = new Function(operate.function)
+                    func()
+                }
+            })
+        }
     },
     setupConnect() {
         fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'

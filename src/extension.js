@@ -161,6 +161,75 @@ function activate(context) {
     },
   }
 
+  let recieveMessage = {
+    showFile(message) {
+      let filename = path.join(rootPath, message.filename)
+      // vscode.workspace.rootPath+'/'+message.filename
+      if (!fs.existsSync(filename)) {
+        fs.writeFileSync(filename, '', { encoding: 'utf8' });
+      }
+      vscode.window.showTextDocument(
+        vscode.Uri.file(filename),
+        {
+          viewColumn: vscode.ViewColumn.One,
+          preserveFocus: true
+        }
+      )
+    },
+    showText(message) {
+      showText(message.text)
+    },
+    showInfo(message) {
+      vscode.window.showInformationMessage(message.text)
+    },
+    requestConfig(message) {
+      currentPanel.webview.postMessage({ command: 'config', content: fg.config });
+    },
+    requestNodes(message) {
+      currentPanel.webview.postMessage({ command: 'nodes', content: fg.nodes });
+    },
+    saveNodes(message) {
+      fg.nodes = message.nodes
+      fg.buildLines()
+      fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
+    },
+    requestRecord(message) {
+      currentPanel.webview.postMessage({ command: 'record', content: fg.record });
+    },
+    runNodes(message) {
+      fg.nodes = message.nodes
+      fg.buildLines()
+      fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
+      fg.runNodes(message.indexes)
+    },
+    runChain(message) {
+      fg.nodes = message.nodes
+      fg.buildLines()
+      fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
+      runChain(message.targetIndex)
+    },
+    clearSnapshot(message) {
+      message.indexes.forEach(ii => delete fg.record[ii].snapshot)
+      saveAndPushRecord()
+    },
+    prompt(message) {
+      vscode.window.showInputBox({
+        prompt: message.show,
+        // ignoreFocusOut: true, // 设为true可防止点击编辑器其他区域时输入框关闭
+        value: message.text, // 可设置默认值
+        // valueSelection: [0, 6] // 可预设选中部分默认文本，例如选中"default"
+      }).then(userInput => {
+        currentPanel.webview.postMessage({ command: 'prompt', content: userInput });
+      });
+    },
+    requestCustom(message) {
+      currentPanel.webview.postMessage({ command: 'custom', content: { operate: [] } });
+    },
+    default(message) {
+      console.log('unknown message:', message)
+    }
+  }
+
   function showText(text) {
     if (showTextPanel == undefined || showTextPanel.isClosed) {
       return vscode.workspace.openTextDocument({
@@ -224,6 +293,15 @@ function activate(context) {
       record = JSON.parse(fs.readFileSync(recordPath, { encoding: 'utf8' }))
       fg.record = record.current
 
+      if (fg.config.custom) {
+        fg.config.custom.extension.forEach(operate => {
+          if (operate.type === 'script') {
+            let func = new Function(operate.function)
+            func()
+          }
+        })
+      }
+
       // vscode.window.showInformationMessage('config:'+JSON.stringify(fg.config))
     } catch (error) {
       vscode.window.showErrorMessage(error.stack);
@@ -233,111 +311,7 @@ function activate(context) {
     return activeTextEditor.document.fileName
   }
 
-  function createNewPanel() {
-    if (!loadFlowGraphAndConfig()) return;
-    // Create and show panel
-    currentPanel = vscode.window.createWebviewPanel(
-      'flowgraph',
-      'Flow Graph',
-      vscode.ViewColumn.Two,
-      {
-        // Enable scripts in the webview
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'board'))]
-      }
-    );
 
-    currentPanel.webview.html = getWebviewContent(currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'board/static'))));
-    // Handle messages from the webview
-    currentPanel.webview.onDidReceiveMessage(
-      message => {
-
-        switch (message.command) {
-          case 'showFile':
-            let filename = path.join(rootPath, message.filename)
-            // vscode.workspace.rootPath+'/'+message.filename
-            if (!fs.existsSync(filename)) {
-              fs.writeFileSync(filename, '', { encoding: 'utf8' });
-            }
-            vscode.window.showTextDocument(
-              vscode.Uri.file(filename),
-              {
-                viewColumn: vscode.ViewColumn.One,
-                preserveFocus: true
-              }
-            )
-            return;
-          case 'showText':
-            showText(message.text)
-            return;
-          case 'showInfo':
-            vscode.window.showInformationMessage(message.text)
-            return;
-          // case 'requestState':
-          //   currentPanel.webview.postMessage({ command: 'state', content: webviewState });
-          //   return;
-          case 'requestConfig':
-            currentPanel.webview.postMessage({ command: 'config', content: fg.config });
-            return;
-          case 'requestNodes':
-            currentPanel.webview.postMessage({ command: 'nodes', content: fg.nodes });
-            return;
-          case 'saveNodes':
-            fg.nodes = message.nodes
-            fg.buildLines()
-            fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
-            return;
-          case 'requestRecord':
-            currentPanel.webview.postMessage({ command: 'record', content: fg.record });
-            return;
-          case 'runNodes':
-            fg.nodes = message.nodes
-            fg.buildLines()
-            fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
-            fg.runNodes(message.indexes)
-            return;
-          case 'runChain':
-            fg.nodes = message.nodes
-            fg.buildLines()
-            fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
-            runChain(message.targetIndex)
-            return;
-          case 'clearSnapshot':
-            message.indexes.forEach(ii => delete fg.record[ii].snapshot)
-            saveAndPushRecord()
-            return;
-          case 'prompt':
-            vscode.window.showInputBox({
-              prompt: message.show,
-              // ignoreFocusOut: true, // 设为true可防止点击编辑器其他区域时输入框关闭
-              value: message.text, // 可设置默认值
-              // valueSelection: [0, 6] // 可预设选中部分默认文本，例如选中"default"
-            }).then(userInput => {
-              currentPanel.webview.postMessage({ command: 'prompt', content: userInput });
-            });
-            return;
-          // case 'saveState':
-          //   webviewState = message.state;
-          //   return;
-          case 'requestCustom':
-            currentPanel.webview.postMessage({ command: 'custom', content: { operate: [] } });
-            return;
-
-        }
-      },
-      undefined,
-      context.subscriptions
-    );
-
-    currentPanel.onDidDispose(
-      () => {
-        currentPanel = undefined;
-      },
-      undefined,
-      context.subscriptions
-    );
-  }
 
   /** @type {vscode.Terminal | undefined} */
   let terminal = undefined;
@@ -355,7 +329,7 @@ function activate(context) {
     // 对终点是目标点且不看有效点的小图做层级拓扑排序(每跑一个点一次)
     // 看第一层的a_i, 分别计算其后继的反馈指向的大图的点, 且大图中的该点是a_i的先驱, 大图中的点的序构成的组合
     // 取所有a_i中组合最小的, 组合相等时选大图中序靠后的点
-    
+
     record.drop = []
 
     let preorpostfunc = (index, func) => func(index, (v, lines) => {
@@ -609,6 +583,45 @@ function activate(context) {
     // build output from ret
     await delay(1000)
     return ret
+  }
+
+  function createNewPanel() {
+    if (!loadFlowGraphAndConfig()) return;
+    // Create and show panel
+    currentPanel = vscode.window.createWebviewPanel(
+      'flowgraph',
+      'Flow Graph',
+      vscode.ViewColumn.Two,
+      {
+        // Enable scripts in the webview
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'board'))]
+      }
+    );
+
+    currentPanel.webview.html = getWebviewContent(currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'board/static'))));
+    // Handle messages from the webview
+    currentPanel.webview.onDidReceiveMessage(
+      message => {
+
+        if (message.command in recieveMessage) {
+          recieveMessage[message.command](message)
+        } else {
+          recieveMessage.default(message)
+        }
+      },
+      undefined,
+      context.subscriptions
+    );
+
+    currentPanel.onDidDispose(
+      () => {
+        currentPanel = undefined;
+      },
+      undefined,
+      context.subscriptions
+    );
   }
 
   context.subscriptions.push(

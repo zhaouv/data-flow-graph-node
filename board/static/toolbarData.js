@@ -14,7 +14,8 @@ const toolbarData = [
 
 
         { text: '连接', class: 'edit', id: 'link', click: 'fg.uiAddLine(fg.lastCard.index,fg.currentCard.index,"next","previous")' },
-        { text: '连接反馈', class: 'edit', id: 'link drop', click: 'fg.uiAddLine(fg.lastCard.index,fg.currentCard.index,"drop","previous")' },
+        // { text: '连接反馈', class: 'edit', id: 'link drop', click: 'fg.uiAddLine(fg.lastCard.index,fg.currentCard.index,"drop","previous")' },
+        { text: '连接侧线', class: 'edit', id: 'link drop', click: 'fg.uiTryAddLine(fg.lastCard.index,fg.currentCard.index)' },
 
         { text: '复制', class: 'edit', id: 'duplicate', click: 'fg.copyAndLink(fg.currentCard.index)' },
 
@@ -42,7 +43,8 @@ const toolbarData = [
         { text: 'v+', class: 'edit', id: 'v', click: 'fg.currentCard.node._pos.height+=100;fg.resetCurrentCardPos()' },
         { text: 'v-', class: 'edit', id: 'b', click: 'fg.currentCard.node._pos.height-=100;fg.resetCurrentCardPos()' },
 
-        { text: '断开', class: 'edit', id: 'break', click: 'fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"next","previous");fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"drop","previous")' },
+        // { text: '断开', class: 'edit', id: 'break', click: 'fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"next","previous");fg.uiRemoveLine(fg.lastCard.index,fg.currentCard.index,"drop","previous")' },
+        { text: '断开', class: 'edit', id: 'break', click: 'fg.uiRemoveAllLine(fg.lastCard.index,fg.currentCard.index)' },
 
         { text: '切换种类', class: 'edit', id: 'toggle type', click: 'fg.changeNodeType(fg.currentCard.index)' },
 

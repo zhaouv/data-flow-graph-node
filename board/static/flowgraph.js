@@ -895,14 +895,13 @@ export const fg = {
     setConfig(config) {
         Object.assign(fg.config, config)
         fg.addToolbar(config.toolbarData)
-        if (config.custom) {
-            config.custom.operate.forEach(operate => {
-                if (operate.type === 'script') {
-                    let func = new Function('fg',operate.function)
-                    func(fg)
-                }
-            })
-        }
+        config?.custom?.operate?.forEach(operate => {
+            if (operate.type === 'script') {
+                let func = new Function('fg', operate.function)
+                func(fg)
+            }
+        })
+
     },
     setupConnect() {
         fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'

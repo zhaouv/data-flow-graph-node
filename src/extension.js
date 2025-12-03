@@ -293,14 +293,12 @@ function activate(context) {
       record = JSON.parse(fs.readFileSync(recordPath, { encoding: 'utf8' }))
       fg.record = record.current
 
-      if (fg.config.custom) {
-        fg.config.custom.extension.forEach(operate => {
-          if (operate.type === 'script') {
-            let func = new Function('fg', 'recieveMessage', operate.function)
-            func(fg, recieveMessage)
-          }
-        })
-      }
+      fg.config?.custom?.extension?.forEach(operate => {
+        if (operate.type === 'script') {
+          let func = new Function('fg', 'recieveMessage', operate.function)
+          func(fg, recieveMessage)
+        }
+      })
 
       // vscode.window.showInformationMessage('config:'+JSON.stringify(fg.config))
     } catch (error) {

@@ -1,4 +1,9 @@
 {
+    "Snapshot": {
+        "noCheckSource": false,
+        "noShowCheckSourceDiff": false,
+        "dirname": "."
+    },
     "Runtype": {
         "": {
             "type": "vscode-jupyter",

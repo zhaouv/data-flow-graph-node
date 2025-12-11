@@ -5,22 +5,32 @@ shell = InteractiveShell.instance()
 if shell is None:
     shell = InteractiveShell()
 
-stdout=Tee(StringIO(), "w", channel="stdout")
-stderr=Tee(StringIO(), "w", channel="stderr")
+def runfile(file):
+    try:
+        success=True
+        error_in_exec=None
+        stdout=Tee(StringIO(), "w", channel="stdout")
+        shell.safe_execfile(file,shell.user_ns,shell.user_ns,raise_exceptions=True)
+    except Exception as e:
+        shell.showtraceback(tb_offset=2)
+        error_in_exec=e
+        success=False
+    finally:
+        result=stdout.file.getvalue()
+        stdout.close()
+    return result,success,error_in_exec
 
-# result = shell.run_cell("""%run a.py""") # 直接run文件看不到错误信息
-result = shell.run_cell("""import time;print(1);time.sleep(3);aaa=123;print(2);1/0""")
+if __name__ == '__main__':
+    success=True
+    if success:result,success,error_in_exec=runfile('a.py')
+    if success:result,success,error_in_exec=runfile('b.py')
+    if success:result,success,error_in_exec=runfile('e.py')
 
-ret=[stdout.file.getvalue(),stderr.file.getvalue()]
-stdout.close()
-stderr.close()
+    print("=== 打印最后一个运行的结果 ===")
+    print("=== 捕获的输出 ===")
+    print(result)
+    print("=== --------- ===")
+    print("执行成功:", success)
+    print("错误信息:", error_in_exec)
 
-print("=== 捕获的输出 ===")
-print(ret[0])
-print("=== 捕获的错误 ===")
-print(ret[1])
-print("执行结果 (result):", result.result)
-print("执行成功:", result.success)
-print("错误信息:", result.error_in_exec)
-
-# 此文件通过 ipython 的 %run run_file.py 运行的话, 是能拿到 aaa 这个变量的
+    # 此文件通过 ipython 的 %run run_file.py 运行的话, 是能拿到 aaa 这个变量的

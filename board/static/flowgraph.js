@@ -769,10 +769,10 @@ export const fg = {
         connectAPI.send({ command: 'requestRecord' })
     },
     runNodes(indexes) {
-        fg.connectAPI.send({ command: 'runNodes', nodes: fg.nodes, indexes: indexes })
+        connectAPI.send({ command: 'runNodes', nodes: fg.nodes, indexes: indexes })
     },
     runChain(index) {
-        fg.connectAPI.send({ command: 'runChain', nodes: fg.nodes, targetIndex: index })
+        connectAPI.send({ command: 'runChain', nodes: fg.nodes, targetIndex: index })
     },
     addResult(ctx) {
         let record = fg.record.filter(v => v.rid == ctx.rid)
@@ -828,10 +828,10 @@ export const fg = {
                 indexes.push(index)
             }
         })
-        fg.connectAPI.send({ command: 'clearSnapshot', indexes: indexes })
+        connectAPI.send({ command: 'clearSnapshot', indexes: indexes })
     },
     saveNodes() {
-        fg.connectAPI.send({ command: 'saveNodes', nodes: fg.nodes })
+        connectAPI.send({ command: 'saveNodes', nodes: fg.nodes })
     },
     setMultiSelect(multiSelect) {
         fg.moveSetting.multiSelectNodes = fg.nodes.filter((v, i) => {
@@ -868,11 +868,11 @@ export const fg = {
             const { ring, levels } = levelTopologicalSort(fg.nodes, indexes)
             // console.log(levels, ring, indexes)
             if (ring) {
-                fg.connectAPI.info('当前节点图包含环无法自动排布')
+                connectAPI.info('当前节点图包含环无法自动排布')
                 return
             }
             if (levels.length == 0) {
-                fg.connectAPI.info('当前无选中的节点')
+                connectAPI.info('当前无选中的节点')
                 return
             }
             let top = fg.nodes[levels[0][0]]._pos.top
@@ -894,7 +894,7 @@ export const fg = {
         })
     },
     print(obj) {
-        let print = fg.connectAPI.isDebug ? console.log : connectAPI.showText
+        let print = connectAPI.isDebug ? console.log : connectAPI.showText
         typeof obj == typeof '' ? print(obj) : print('\n\n\n\n' + JSON.stringify(obj, null, 4) + '\n\n\n\n')
     },
     setConfig(config) {
@@ -909,10 +909,10 @@ export const fg = {
 
     },
     setupConnect() {
-        fg.connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'
-        fg.connectAPI.recieve.nodes = 'fg.addContent(message.content);fg.requestRecord()'
-        fg.connectAPI.recieve.result = 'fg.addResult(message.content);'
-        fg.connectAPI.recieve.record = 'fg.setRecord(message.content);'
+        connectAPI.recieve.config = 'fg.setConfig(message.content);fg.requestNodes()'
+        connectAPI.recieve.nodes = 'fg.addContent(message.content);fg.requestRecord()'
+        connectAPI.recieve.result = 'fg.addResult(message.content);'
+        connectAPI.recieve.record = 'fg.setRecord(message.content);'
         fg.requestConfig()
 
     },

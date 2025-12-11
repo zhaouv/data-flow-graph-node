@@ -9,7 +9,19 @@ const { toolbarData } = require('../board/static/toolbarData.js');
 const { blockPrototype } = require('../board/static/blockPrototype.js');
 const { Runtype } = require('../board/static/Runtype.js');
 const { keymap } = require('../board/static/keymap.js');
+const { BaseConfig } = require('../board/static/BaseConfig.js');
 const { levelTopologicalSort } = require('../board/static/levelTopologicalSort.js');
+
+const defaultConfig = Object.assign({}, BaseConfig, {
+  toolbarData: toolbarData,
+  blockPrototype: blockPrototype,
+  Runtype: Runtype,
+  keymap: keymap,
+})
+
+const templateConfig = Object.assign({}, BaseConfig, {
+  Runtype: Runtype,
+})
 
 function getRandomString() {
   let text = '';
@@ -274,10 +286,7 @@ function activate(context) {
         }
       }
       fg.config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }))
-      if (!fg.config.toolbarData) fg.config.toolbarData = toolbarData
-      if (!fg.config.blockPrototype) fg.config.blockPrototype = blockPrototype
-      if (!fg.config.keymap) fg.config.keymap = keymap
-      if (!fg.config.Runtype) fg.config.Runtype = Runtype
+      fg.config = Object.assign({}, defaultConfig, fg.config)
 
       nodesPath = path.join(rootPath, fgPathObj.nodes)
       if (!fs.existsSync(nodesPath)) {
@@ -309,7 +318,102 @@ function activate(context) {
     return activeTextEditor.document.fileName
   }
 
+  class DiffContentProvider {
+    constructor() {
+      this.contentMap = new Map();
+    }
+    provideTextDocumentContent(uri) {
+      return this.contentMap.get(uri.toString()) || '';
+    }
+    setContent(uri, content) {
+      this.contentMap.set(uri.toString(), content);
+    }
+  }
+  async function showTextDiff(textA, textB, title = '文本比较') {
+    // 创建唯一的 URI
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 15);
+    const leftUri = vscode.Uri.parse(`mydiff:left-${timestamp}-${randomId}.txt`);
+    const rightUri = vscode.Uri.parse(`mydiff:right-${timestamp}-${randomId}.txt`);
+    // 创建内容提供者
+    const provider = new DiffContentProvider();
+    // 注册内容提供者（使用自定义的 scheme 'mydiff'）
+    const registration = vscode.workspace.registerTextDocumentContentProvider('mydiff', provider);
+    // 设置内容
+    provider.setContent(leftUri, textA);
+    provider.setContent(rightUri, textB);
+    try {
+      // 打开 diff 视图
+      await vscode.commands.executeCommand(
+        'vscode.diff',
+        leftUri,
+        rightUri,
+        title,
+        {
+          preview: false,  // 不在预览模式打开
+          viewColumn: vscode.ViewColumn.Two
+        }
+      );
+    } finally {
+      // 清理：稍后注销提供者
+      setTimeout(() => registration.dispose(), 1000);
+    }
+  }
+  /**
+   * 检查源代码和record的源代码的一致性
+   * @param {Array} indexes 
+   * @returns 
+   */
+  async function checkSource(indexes) {
+    if (fg.config?.Snapshot?.noCheckSource) return
+    let diff = {}
+    // 不一致时为 true
+    let failCheck = await Promise.all(indexes.map(async index => {
+      let ctx = fg.record[index]
+      // 记录不存在 或者 记录内无源码 或者 快照不存在时 无视
+      if (!ctx || !ctx.content || !ctx.snapshot) return false
+      let content = await fs.promises.readFile(path.join(rootPath, ctx.filename), { encoding: 'utf8' })
+      if (ctx.content != content) {
+        diff[index] = content
+        return true
+      } else {
+        return false
+      }
+    }))
+    // 待移除快照的indexes
+    let toRemove = indexes.filter((v, i) => failCheck[i])
+    while (toRemove.length) {
+      fg.findNodeForward(toRemove.shift(), (v, lines) => {
+        // 只接受next->previous的线
+        if (lines.filter(l => l.lsname == 'next' && l.lename == 'previous').length == 0) {
+          return false
+        }
+        return true
+      }).map(v => fg.nodes.indexOf(v)).forEach(ii => {
+        delete fg.record[ii]?.snapshot
+        if (toRemove.includes(ii)) {
+          toRemove.splice(toRemove.indexOf(ii), 1)
+        }
+      })
+    }
 
+    if (fg.config?.Snapshot?.noShowCheckSourceDiff) return
+    toRemove = indexes.filter((v, i) => failCheck[i])
+    if (toRemove.length == 0) return
+    let textA=[]
+    let textB=[]
+    toRemove.forEach(index=>{
+      let ctx=fg.record[index]
+      textA.push('# '+ctx.filename+'\n')
+      textB.push('# '+ctx.filename+'\n')
+      textA.push(ctx.content)
+      textB.push(diff[index])
+      textA.push('\n')
+      textB.push('\n')
+    })
+    await showTextDiff(textA.join('\n'), textB.join('\n'), '和快照变更比较');
+
+  }
 
   /** @type {vscode.Terminal | undefined} */
   let terminal = undefined;
@@ -346,6 +450,8 @@ function activate(context) {
       return showText('图包含环, 无法执行此功能')
     }
     let gorder = glevels.reduce((a, b) => a.concat(b))
+
+    await checkSource(gorder)
 
     let torun = fg.findNodeBackward(targetIndex, (v, lines) => {
       let index = fg.nodes.indexOf(v)
@@ -458,6 +564,7 @@ function activate(context) {
 
         let fullname = path.join(rootPath, filename)
         let content = fs.readFileSync(fullname, { encoding: 'utf8' })
+        ctx.content = content
 
         function buildPayload(text) {
           let func = new Function('filename', 'fullname', 'content', text)
@@ -636,7 +743,7 @@ function activate(context) {
         let basename = path.basename(userInput)
         let prefix = path.join(dirname, basename)
         fs.writeFileSync(prefix + '.flowgraph.json', `{"config": "${basename}.config.json","nodes": "${basename}.nodes.json","record": "${basename}.record.json"}`, { encoding: 'utf8' });
-        fs.writeFileSync(prefix + '.config.json', JSON.stringify({ Runtype }, null, 4), { encoding: 'utf8' });
+        fs.writeFileSync(prefix + '.config.json', JSON.stringify(templateConfig, null, 4), { encoding: 'utf8' });
         fs.writeFileSync(prefix + '.nodes.json', JSON.stringify([{
           "text": "new",
           "filename": "a.py",
@@ -657,7 +764,7 @@ function activate(context) {
         await vscode.commands.executeCommand('flowgraph.editFlowGraph')
       }
 
-      async function debug1(params) {
+      async function debug_jupyter(params) {
         let rid = getRandomString()
         let code = 'print(123);import time;time.sleep(1);print(456);a.append("' + rid + '");print(a)'
         // let code='print(123);import time;time.sleep(1);print(456);{1:2}'
@@ -673,7 +780,29 @@ function activate(context) {
         vscode.window.showInformationMessage('submit done: ' + JSON.stringify(ret))
       }
 
-      // debug1()
+      async function debug_diff(params) {
+
+        const textA = `function greet(name) {
+            console.log("Hello, " + name);
+        }
+        
+        greet("World");`;
+
+        const textB = `function greet(name) {
+            console.log("Hello, " + name);
+            console.log("Welcome!");
+        }
+        
+        // 调用函数
+        greet("World");
+        greet("User");`;
+
+        // 显示 diff
+        await showTextDiff(textA, textB, '代码变更比较');
+      }
+
+      // debug_jupyter()
+      // debug_diff()
 
       initProject()
 

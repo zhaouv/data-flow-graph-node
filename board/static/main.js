@@ -9,15 +9,16 @@ if (fg.connectAPI.isDebug) {
         import('./toolbarData.js'),
         import('./Runtype.js'),
         import('./keymap.js'),
+        import('./BaseConfig.js'),
     ]).then(m => {
         const cardData = m[0].cardData
         const exports = globalThis.exports
-        const config = {
+        const config = Object.assign({}, exports.BaseConfig, {
             toolbarData: exports.toolbarData,
             blockPrototype: exports.blockPrototype,
             Runtype: exports.Runtype,
             keymap: exports.keymap,
-        }
+        })
         fg.setConfig(config)
         fg.addContent(cardData)
     })

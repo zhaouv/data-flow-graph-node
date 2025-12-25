@@ -23,6 +23,8 @@ const templateConfig = Object.assign({}, BaseConfig, {
   Runtype: Runtype,
 })
 
+const recordDefault = '{"current":[],"history":[],"drop":[],"concat":{}}'
+
 function getRandomString() {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -74,12 +76,12 @@ function activate(context) {
   let nodesPath = undefined
   let recordPath = undefined
   let record = undefined // record.current是fg.record
-  const recordDefault = '{"current":[],"history":[],"drop":[]}'
 
   let fg = {
     config: undefined,
     nodes: undefined,
     record: undefined,
+    mode: { restartKernel: undefined, clearIpynb: undefined },
     // 模仿webview中的fg的部分特性
     getRandomString() {
       return getRandomString();
@@ -218,7 +220,7 @@ function activate(context) {
       fg.nodes = message.nodes
       fg.buildLines()
       fs.writeFileSync(nodesPath, JSON.stringify(fg.nodes, null, 4), { encoding: 'utf8' });
-      runChain(message.targetIndex)
+      runChain(message.targetIndex, message.clearIpynb, message.restartKernel)
     },
     showAllDiff(message) {
       checkSource(fg.nodes.map((v, i) => i), true)
@@ -317,8 +319,10 @@ function activate(context) {
       recordPath = path.join(rootPath, fgPathObj.record)
       if (!fs.existsSync(recordPath)) {
         fs.writeFileSync(recordPath, recordDefault, { encoding: 'utf8' });
+        record = JSON.parse(recordDefault)
+      } else {
+        record = JSON.parse(fs.readFileSync(recordPath, { encoding: 'utf8' }))
       }
-      record = JSON.parse(fs.readFileSync(recordPath, { encoding: 'utf8' }))
       fg.record = record.current
 
       fg.config?.custom?.extension?.forEach(operate => {
@@ -478,11 +482,14 @@ function activate(context) {
     terminal.sendText(message);
   }
 
-  async function runChain(targetIndex) {
+  async function runChain(targetIndex, clearIpynb, restartKernel) {
     // 先对终点是目标点且看有效点的大图做层级拓扑排序(全局只做一次)
     // 对终点是目标点且不看有效点的小图做层级拓扑排序(每跑一个点一次)
     // 看第一层的a_i, 分别计算其后继的反馈指向的大图的点, 且大图中的该点是a_i的先驱, 大图中的点的序构成的组合
     // 取所有a_i中组合最小的, 组合相等时选大图中序靠后的点
+
+    fg.mode.restartKernel = restartKernel
+    fg.mode.clearIpynb = clearIpynb
 
     record.drop = []
     record.concat = {}
@@ -573,6 +580,8 @@ function activate(context) {
         torun.splice(torun.indexOf(index), 1)
       }
     }
+    fg.mode.restartKernel = undefined
+    fg.mode.clearIpynb = undefined
     vscode.window.showInformationMessage('运行链完成')
   }
 
@@ -659,6 +668,10 @@ function activate(context) {
         }
         if (rconfig.type === 'vscode-jupyter') {
           let targetPath = path.join(rootPath, rconfig.filename)
+          if (!fs.existsSync(targetPath)) {
+            fs.writeFileSync(targetPath, '', { encoding: 'utf8' });
+            await delay(100)
+          }
           const result = await runJupyter(targetPath, rid, content)
           if (result.error) {
             throw new Error(result.error);
@@ -710,6 +723,16 @@ function activate(context) {
   async function runJupyter(fullname, rid, code) {
     await vscode.commands.executeCommand('vscode.openWith', vscode.Uri.file(fullname), 'jupyter-notebook')
     await delay(200)
+    if (fg.mode.clearIpynb) {
+      await vscode.commands.executeCommand('jupyter.notebookeditor.removeallcells')
+      fg.mode.clearIpynb = undefined
+    }
+    if (fg.mode.restartKernel) {
+      await vscode.commands.executeCommand('jupyter.restartkernel') // 这个指令微软没做成结束才返回
+      await delay(100) // 只能强行填个延时来等待结束...
+      // 以及要配合 "jupyter.askForKernelRestart": false
+      fg.mode.restartKernel = undefined
+    }
     await vscode.commands.executeCommand('notebook.focusBottom')
     await vscode.commands.executeCommand('notebook.cell.insertCodeCellBelow')
     await delay(400)

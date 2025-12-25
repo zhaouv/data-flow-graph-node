@@ -21,6 +21,8 @@ const toolbarData = [
 
         { text: '?启用', class: 'run', click: 'fg.connectAPI.info("尚未实现")' },
 
+        { text: 'k', class: 'run primary', id: 'restart kernel', click: 'fg.toggleButton(btn);fg.mode.restartKernel*=-1', title: '点击运行链时是否重启jupyter kernel(仅对vscode-jupyter运行模式有效)' },
+
 
 
         { text: '重置快照链', class: 'run', click: 'fg.clearSnapshotChain(fg.currentCard.index)' },
@@ -56,6 +58,7 @@ const toolbarData = [
         { text: 'f', class: 'run primary', id: 'file', click: 'fg.toggleButton(btn);fg.mode.file*=-1', title: '点击卡片时是否显示文件' },
 
         { text: '?禁用', class: 'run', click: 'fg.connectAPI.info("尚未实现")' },
+        { text: 'c', class: 'run primary', id: 'clear ipynb', click: 'fg.toggleButton(btn);fg.mode.clearIpynb*=-1', title: '点击运行链时是否清空jupyter notebook(仅对vscode-jupyter运行模式有效)' },
         { text: '运行链', class: 'run', id: 'run chain', click: 'fg.runChain(fg.currentCard.index)' },
         { text: '运行', class: 'run', id: 'run', click: 'fg.runNodes([fg.currentCard.index])' },
         { text: '结果', class: 'run', id: 'result', click: 'fg.showResult(fg.currentCard.index)' },

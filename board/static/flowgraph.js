@@ -158,7 +158,7 @@ export const fg = {
     currentCard: { index: -1, card: null, node: null, tick: 0 },
     lastCard: { index: -1, card: null, node: null, tick: 0 },
     moveSetting: { down: -1, multiSelect: -1, multiSelectNodes: [] },
-    mode: { edit: -1, run: 1, file: 1 },
+    mode: { edit: -1, run: 1, file: 1, restartKernel: 1, clearIpynb: 1 },
     // state: {},
     record: [],
     savedKey: { _pos: undefined, _linkTo: undefined },
@@ -772,7 +772,7 @@ export const fg = {
         connectAPI.send({ command: 'runNodes', nodes: fg.nodes, indexes: indexes })
     },
     runChain(index) {
-        connectAPI.send({ command: 'runChain', nodes: fg.nodes, targetIndex: index })
+        connectAPI.send({ command: 'runChain', nodes: fg.nodes, targetIndex: index, clearIpynb: fg.mode.clearIpynb == 1, restartKernel: fg.mode.restartKernel == 1 })
     },
     showAllDiff() {
         connectAPI.send({ command: 'showAllDiff' })

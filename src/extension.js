@@ -754,7 +754,7 @@ function activate(context) {
     const nbeditor = vscode.window.activeNotebookEditor;
     let editor = vscode.window.activeTextEditor;
     await editor.edit(edit => {
-      edit.insert(editor.selection.active, '#rid:' + rid + '\n__file__ = r"' + sourcename + '"\n' + code);
+      edit.insert(editor.selection.active, '#rid:' + rid + '\n__fg_file__ = r"' + sourcename + '"\n' + code);
     })
     await delay(200)
     await vscode.commands.executeCommand('notebook.cell.execute')

@@ -1,22 +1,5 @@
-/**
- * @typedef {Object} RunnersDeps
- * @property {import('./fgModel').ReturnType_createFgModel} fg fgModel 实例（引用，外部可变）
- * @property {() => {current:Array, history:Array, drop:Array, concat:Object}} getRecord 获取当前 record
- * @property {() => string} getRootPath 获取当前工程根目录
- * @property {(text: string) => Promise<void>} showText 显示日志面板
- * @property {() => void} saveAndPushRecord 保存 record 并推送到 webview
- * @property {(msg: Object) => void} postMessage 向 webview 发消息
- * @property {(message: string, ...items: string[]) => Thenable<string|undefined>} showErrorMessage
- * @property {(message: string, ...items: string[]) => Thenable<string|undefined>} showInformationMessage
- * @property {(fullname: string, rid: string, code: string, sourcename?: string) => Promise<{output:string,error:string}>} runJupyterFn
- * @property {(message: string) => void} runTerminalFn
- * @property {typeof import('child_process').spawnSync} spawnSyncFn
- * @property {(url: string, payload: any) => Promise<any>} postAsync
- * @property {(groups: Array<[string,string]>, title: string, rootPath: string) => Promise<void>} showFilesDiff
- * @property {typeof import('fs')} fsModule
- * @property {typeof import('path')} pathModule
- * @property {Function} levelTopologicalSort
- */
+const path = require('path')
+const { levelTopologicalSort } = require('../board/static/levelTopologicalSort.js')
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -24,45 +7,41 @@ function delay(ms) {
 
 /**
  * 创建执行引擎
- * @param {RunnersDeps} deps
+ * @param {{ fg: any, ctx: any, host: any }} deps
  * @returns {{ runFiles: Function, runChain: Function, checkSource: Function }}
  */
 function createRunners(deps) {
+  const { fg, ctx: proj, host } = deps
   const {
-    fg,
-    getRecord,
-    getRootPath,
-    showText,
-    saveAndPushRecord,
+    fs,
+    spawnSync,
+    post,
     postMessage,
-    showErrorMessage,
-    showInformationMessage,
-    runJupyterFn,
-    runTerminalFn,
-    spawnSyncFn,
-    postAsync,
+    showText,
+    showError,
+    showInfo,
     showFilesDiff,
-    fsModule,
-    pathModule,
-    levelTopologicalSort,
-  } = deps
+    runJupyter,
+    runTerminal,
+    saveAndPushRecord,
+  } = host
 
   /**
    * 检查源代码和record的源代码的一致性
-   * @param {Array} indexes 
+   * @param {Array} indexes
    * @param {Boolean} noRemove 不一致时是否移除快照. 界面点击时不移除, 运行链时移除
    * @param {Boolean} clickToShow 是否需要再点击一次确认才弹出多文件diff
-   * @returns 
+   * @returns
    */
   async function checkSource(indexes, noRemove = false, clickToShow = true) {
     if (fg.config?.Snapshot?.noCheckSource) return
-    const rootPath = getRootPath()
+    const rootPath = proj.rootPath
     // 不一致时为 true
     let failCheck = await Promise.all(indexes.map(async index => {
       let ctx = fg.record[index]
       // 记录不存在 或者 记录内无源码 或者 快照不存在时 无视
       if (!ctx || !ctx.content || !ctx.snapshot) return false
-      let content = await fsModule.promises.readFile(pathModule.join(rootPath, ctx.filename), { encoding: 'utf8' })
+      let content = await fs.promises.readFile(path.join(rootPath, ctx.filename), { encoding: 'utf8' })
       if (ctx.content != content) {
         return true
       } else {
@@ -95,7 +74,7 @@ function createRunners(deps) {
     if (clickToShow) {
       // 此处需要非阻塞, 弹个消息挂着就行, 不用await
       let toShowCache = toShow.map(index => [fg.record[index].filename, fg.record[index].content]) // 此处需要捕获这个变量
-      showInformationMessage(
+      showInfo(
         toShow.length + ' 个文件发生变动',
         '查看'
       ).then(result => {
@@ -117,7 +96,7 @@ function createRunners(deps) {
     fg.mode.restartKernel = restartKernel
     fg.mode.clearIpynb = clearIpynb
 
-    const record = getRecord()
+    const record = proj.record
     record.drop = []
     record.concat = {}
 
@@ -183,11 +162,11 @@ function createRunners(deps) {
     async function buildandrun(index, display) {
       let ret = await fg.runNodes([index], runFiles, display)
       if (ret.error) {
-        showErrorMessage('运行期间出现错误')
+        showError('运行期间出现错误')
         throw new Error(ret.error)
       }
       if (ret.drop && ret.maxCount && ret.drop >= ~~ret.maxCount) {
-        showErrorMessage('反馈失败次数达到设定的上限')
+        showError('反馈失败次数达到设定的上限')
         throw new Error("drop max count")
       }
       return ret.dropid
@@ -209,13 +188,13 @@ function createRunners(deps) {
     }
     fg.mode.restartKernel = undefined
     fg.mode.clearIpynb = undefined
-    showInformationMessage('运行链完成')
+    showInfo('运行链完成')
   }
 
   async function runFiles(files, display) {
     if (display == null) display = []
-    const record = getRecord()
-    const rootPath = getRootPath()
+    const record = proj.record
+    const rootPath = proj.rootPath
 
     function setRunTick(ctx) {
       ctx.runTick = new Date().getTime()
@@ -250,11 +229,11 @@ function createRunners(deps) {
         await showText(display.join('\n\n'))
 
         if (ctx.condition) {
-          fsModule.writeFileSync(pathModule.join(rootPath, ctx.condition), '', { encoding: 'utf8' })
+          fs.writeFileSync(path.join(rootPath, ctx.condition), '', { encoding: 'utf8' })
         }
 
-        let fullname = pathModule.join(rootPath, filename)
-        let content = fsModule.readFileSync(fullname, { encoding: 'utf8' })
+        let fullname = path.join(rootPath, filename)
+        let content = fs.readFileSync(fullname, { encoding: 'utf8' })
         ctx.content = content
 
         function buildPayload(text) {
@@ -264,11 +243,11 @@ function createRunners(deps) {
 
         if (rconfig.type === 'vscode-terminal') {
           let message = rconfig.message.replaceAll('__filename__', filename).replaceAll('__fullname__', fullname).replaceAll('__content__', content)
-          runTerminalFn(message)
+          runTerminal(message)
         }
         if (rconfig.type === 'node-terminal') {
           let payload = buildPayload(rconfig.payload)
-          const result = spawnSyncFn(payload[0], payload.slice(1), { encoding: 'utf8', cwd: rootPath });
+          const result = spawnSync(payload[0], payload.slice(1), { encoding: 'utf8', cwd: rootPath });
           // display.push(JSON.stringify(result))
           if (result.status === 0) {
             setDoneTick(ctx, result.stdout.toString())
@@ -278,31 +257,31 @@ function createRunners(deps) {
         }
         if (rconfig.type === 'node-post') {
           let payload = buildPayload(rconfig.payload)
-          let ret = await postAsync(
+          let ret = await post(
             rconfig.url,
             payload,
           );
           setDoneTick(ctx, new Function('ret', rconfig.show)(ret))
         }
         if (rconfig.type === 'concat') {
-          let targetPath = pathModule.join(rootPath, rconfig.filename)
+          let targetPath = path.join(rootPath, rconfig.filename)
           if (targetPath in record?.concat) {
-            fsModule.writeFileSync(targetPath, content + '\n', { encoding: 'utf8', flag: 'a' })
+            fs.writeFileSync(targetPath, content + '\n', { encoding: 'utf8', flag: 'a' })
             record.concat[targetPath] += 1
           } else {
             record.concat = record.concat || {}
-            fsModule.writeFileSync(targetPath, content + '\n', { encoding: 'utf8' })
+            fs.writeFileSync(targetPath, content + '\n', { encoding: 'utf8' })
             record.concat[targetPath] = 1
           }
           setDoneTick(ctx, 'write to ' + rconfig.filename)
         }
         if (rconfig.type === 'vscode-jupyter') {
-          let targetPath = pathModule.join(rootPath, rconfig.filename)
-          if (!fsModule.existsSync(targetPath)) {
-            fsModule.writeFileSync(targetPath, '', { encoding: 'utf8' });
+          let targetPath = path.join(rootPath, rconfig.filename)
+          if (!fs.existsSync(targetPath)) {
+            fs.writeFileSync(targetPath, '', { encoding: 'utf8' });
             await delay(100)
           }
-          const result = await runJupyterFn(targetPath, rid, content, fullname)
+          const result = await runJupyter(targetPath, rid, content, fullname)
           if (result.error) {
             throw new Error(result.error);
           } else {
@@ -310,7 +289,7 @@ function createRunners(deps) {
           }
         }
         if (ctx.condition) {
-          let conditionResult = fsModule.readFileSync(pathModule.join(rootPath, ctx.condition), { encoding: 'utf8' })
+          let conditionResult = fs.readFileSync(path.join(rootPath, ctx.condition), { encoding: 'utf8' })
           if (conditionResult) {
             record.drop[ctx.index] = 1 + ~~record.drop[ctx.index]
             ctx.drop = record.drop[ctx.index]
